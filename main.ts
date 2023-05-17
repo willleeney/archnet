@@ -9,6 +9,7 @@ interface PluginSettings {
 	noteMargin: string;
 	x: string;
 	y: string;
+}
 
 const DEFAULT_SETTINGS: PluginSettings = {
 	noteWidth: "400",
