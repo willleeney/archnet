@@ -22,29 +22,20 @@ export default class NewNotePlugin extends Plugin {
 
   async createNewCard() {
 	new Notice('active .')
-    const activeLeaf = this.getActiveLeaf();
-    if (!activeLeaf || !(activeLeaf.view instanceof MarkdownView)) {
-      return;
-    }
-	new Notice('active leaf failed')
 
-    const activeFile = activeLeaf.view.file;
-    if (!this.activeFileIsCanvas(activeFile)) {
-      new Notice('Please open a canvas file.');
-      return;
-    }
 
-    const newContents = '';
-	new Notice('write canvas file failed.')
-    await this.writeCanvasFile(activeFile, newContents);
+    const activeFile = this.app.workspace.getActiveFile();
+	if (activeFile && this.activeFileIsCanvas(activeFile)) {
+    
+			const newContents = '';
+			new Notice('write to canvas')
+			await this.writeCanvasFile(activeFile, newContents);
+			new Notice('wro wve anvas')
+  		}
   }
 
-  activeFileIsCanvas(file: TFile) {
+  async activeFileIsCanvas(file: TFile) {
     return file.extension === 'canvas';
-  }
-
-  getActiveLeaf(): WorkspaceLeaf | null {
-    return this.app.workspace.activeLeaf;
   }
 
   async writeCanvasFile(file: TFile, contents: string) {
