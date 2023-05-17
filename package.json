@@ -1,6 +1,6 @@
 {
 	"name": "archnet",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "This is no longer the sample plugin... ",
 	"main": "main.js",
 	"scripts": {

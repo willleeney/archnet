@@ -17,14 +17,16 @@ export default class NewNotePlugin extends Plugin {
 		modifiers: ['Mod', 'Alt'],
 		action: 'create-new-card',
 	  });
-	  
+
   }
 
   async createNewCard() {
+	new Notice('active .')
     const activeLeaf = this.getActiveLeaf();
     if (!activeLeaf || !(activeLeaf.view instanceof MarkdownView)) {
       return;
     }
+	new Notice('active leaf failed')
 
     const activeFile = activeLeaf.view.file;
     if (!this.activeFileIsCanvas(activeFile)) {
@@ -33,6 +35,7 @@ export default class NewNotePlugin extends Plugin {
     }
 
     const newContents = '';
+	new Notice('write canvas file failed.')
     await this.writeCanvasFile(activeFile, newContents);
   }
 
