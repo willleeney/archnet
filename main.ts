@@ -11,9 +11,16 @@ export default class NewNotePlugin extends Plugin {
         this.addNewCard();
       },
     });
+
+	this.addHotkey({
+		key: 'D',
+		modifiers: ['Mod', 'Alt'],
+		action: 'create-new-card',
+	  });
+	  
   }
 
-  addNewCard() {
+  async createNewCard() {
     const activeLeaf = this.getActiveLeaf();
     if (!activeLeaf || !(activeLeaf.view instanceof MarkdownView)) {
       return;
@@ -25,9 +32,8 @@ export default class NewNotePlugin extends Plugin {
       return;
     }
 
-    const newNote = this.app.workspace.createMarkdownNote();
-    const canvasView = activeLeaf.view as MarkdownView;
-    canvasView.editor.replaceSelection(`[[${newNote.basename}]]`);
+    const newContents = '';
+    await this.writeCanvasFile(activeFile, newContents);
   }
 
   activeFileIsCanvas(file: TFile) {
@@ -36,5 +42,12 @@ export default class NewNotePlugin extends Plugin {
 
   getActiveLeaf(): WorkspaceLeaf | null {
     return this.app.workspace.activeLeaf;
+  }
+
+  async writeCanvasFile(file: TFile, contents: string) {
+    const app = this.app;
+    const oldMarkdownString = await app.vault.read(file);
+    const newMarkdownString = `${oldMarkdownString}\n\n${contents}`;
+    await app.vault.modify(file, newMarkdownString);
   }
 }
