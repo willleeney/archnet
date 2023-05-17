@@ -16,18 +16,10 @@ export default class NewNotePlugin extends Plugin {
       return;
     }
 
-    const activeFile = activeLeaf.view.file;
-    if (!this.activeFileIsCanvas(activeFile)) {
-      return;
-    }
-
     const newNote = this.app.workspace.createMarkdownNote();
     activeLeaf.view.sourceMode.cmEditor.replaceSelection(`[[${newNote.basename}]]`);
   }
 
-  activeFileIsCanvas(file: TFile) {
-    return file.extension === 'canvas';
-  }
 
   getActiveLeaf(): WorkspaceLeaf | null {
     return this.app.workspace.activeLeaf;
