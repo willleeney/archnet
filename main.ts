@@ -18,20 +18,51 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	y: "0",
 };
 
-class InsertModal extends Modal {
+class SampleSettingTab extends PluginSettingTab {
 	plugin: ArchnetPlugin;
-	confirmed: boolean = false;
 
-	constructor(plugin: ArchnetPlugin) {
-		super(plugin.app);
+	constructor(app: App, plugin: ArchnetPlugin) {
+		super(app, plugin);
 		this.plugin = plugin;
 	}
 
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.createEl("h1", { text: "Canvas RandomNote Settings" });
-		const settings = this.plugin.settings;
+	display(): void {
+		const {containerEl} = this;
 
+		containerEl.empty();
+
+		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+
+		new Setting(containerEl)
+			.setName('Setting #1')
+			.setDesc('It\'s a secret')
+			.addText(text => text
+				.setPlaceholder('Enter your secret')
+				.setValue(this.plugin.settings.mySetting)
+				.onChange(async (value) => {
+					console.log('Secret: ' + value);
+					this.plugin.settings.mySetting = value;
+					await this.plugin.saveSettings();
+				}));
+	}
+}
+
+
+class SampleSettingTab extends PluginSettingTab {
+	plugin: ArchnetPlugin;
+	confirmed: boolean = false;
+
+	constructor(app: App, plugin: ArchnetPlugin) {
+		super(app, plugin);
+		this.plugin = plugin;
+	}
+
+	display(): void {
+		const {contentEl} = this;
+
+		contentEl.empty();
+
+		contentEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
 
 		new Setting(contentEl).setName("Note Width").addText((text) =>
 			text.setValue(settings.noteWidth).onChange(async (value) => {
@@ -248,50 +279,5 @@ export default class ArchnetPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-}
-
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
-	}
-}
-
-class SampleSettingTab extends PluginSettingTab {
-	plugin: ArchnetPlugin;
-
-	constructor(app: App, plugin: ArchnetPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
-
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
 	}
 }
