@@ -1,4 +1,4 @@
-import { Plugin, MarkdownView, TFile, WorkspaceLeaf } from 'obsidian';
+import { Plugin, MarkdownView, TFile, WorkspaceLeaf, Notice } from 'obsidian';
 
 export default class NewNotePlugin extends Plugin {
   async onload() {
@@ -6,20 +6,30 @@ export default class NewNotePlugin extends Plugin {
 
     // Add a button to the toolbar
     this.addRibbonIcon('dice', 'Create New Note', () => {
-      this.createNewNote();
+      this.addNewCard();
     });
   }
 
-  createNewNote() {
+  addNewCard() {
     const activeLeaf = this.getActiveLeaf();
     if (!activeLeaf || !(activeLeaf.view instanceof MarkdownView)) {
       return;
     }
 
+    const activeFile = activeLeaf.view.file;
+    if (!this.activeFileIsCanvas(activeFile)) {
+      new Notice('Please open a canvas file.');
+      return;
+    }
+
     const newNote = this.app.workspace.createMarkdownNote();
-    activeLeaf.view.sourceMode.cmEditor.replaceSelection(`[[${newNote.basename}]]`);
+    const canvasView = activeLeaf.view as MarkdownView;
+    canvasView.editor.replaceSelection(`[[${newNote.basename}]]`);
   }
 
+  activeFileIsCanvas(file: TFile) {
+    return file.extension === 'canvas';
+  }
 
   getActiveLeaf(): WorkspaceLeaf | null {
     return this.app.workspace.activeLeaf;
