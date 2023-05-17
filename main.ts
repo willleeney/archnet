@@ -8,7 +8,7 @@ export default class NewNotePlugin extends Plugin {
       id: 'create-new-note',
       name: 'Create New Note',
       callback: () => {
-        this.addNewCard();
+        this.createNewCard();
       },
     });
 
