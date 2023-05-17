@@ -1,17 +1,209 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, View } from 'obsidian';
+import { CanvasData, CanvasFileData } from "obsidian/canvas";
+import md5 from "md5";
 
-// Remember to rename these classes and interfaces!
 
-interface MyPluginSettings {
-	mySetting: string;
+interface PluginSettings {
+	noteWidth: string;
+	noteHeight: string;
+	noteMargin: string;
+	x: string;
+	y: string;
+
+const DEFAULT_SETTINGS: PluginSettings = {
+	noteWidth: "400",
+	noteHeight: "500",
+	noteMargin: "50",
+	x: "0",
+	y: "0",
+};
+
+class InsertModal extends Modal {
+	plugin: ArchnetPlugin;
+	confirmed: boolean = false;
+
+	constructor(plugin: ArchnetPlugin) {
+		super(plugin.app);
+		this.plugin = plugin;
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+		contentEl.createEl("h1", { text: "Canvas RandomNote Settings" });
+		const settings = this.plugin.settings;
+
+
+		new Setting(contentEl).setName("Note Width").addText((text) =>
+			text.setValue(settings.noteWidth).onChange(async (value) => {
+				settings.noteWidth = value;
+				await this.plugin.saveSettings();
+			})
+		);
+
+		new Setting(contentEl).setName("Note Height").addText((text) =>
+			text.setValue(settings.noteHeight).onChange(async (value) => {
+				settings.noteHeight = value;
+				await this.plugin.saveSettings();
+			})
+		);
+
+		new Setting(contentEl)
+			.setName("Note Margin")
+			.setDesc("Margin (horizontal and vertical) between notes")
+			.addText((text) =>
+				text.setValue(settings.noteMargin).onChange(async (value) => {
+					settings.noteMargin = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(contentEl)
+			.setName("X-anchor")
+			.setDesc("X-coordinate of top-left corner of first note")
+			.addText((text) =>
+				text.setValue(settings.x).onChange(async (value) => {
+					settings.x = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(contentEl)
+			.setName("Y-anchor")
+			.setDesc("Y-coordinate of top-left corner of first note")
+			.addText((text) =>
+				text.setValue(settings.y).onChange(async (value) => {
+					settings.y = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(contentEl).addButton((btn) =>
+			btn
+				.setButtonText("Add Notes")
+				.setCta()
+				.onClick(() => {
+					this.confirmed = true;
+					this.close();
+				})
+		);
+	}
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+
+function buildGrid(
+	xAnchor: number,
+	yAnchor: number
+): { x: number; y: number }[] {
+	const grid = [];
+	let x = xAnchor;
+	let y = yAnchor;
+	grid.push({ x, y });
+		
+	return grid;
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+
+export default class ArchnetPlugin extends Plugin {
+	settings: PluginSettings;
+
+	// checks that the active file is a canvas
+	activeFileIsCanvas = (file: TFile) => {
+		return file.extension === "canvas";
+	};
+
+	// gets the contents of the canvas
+	getCanvasContents = async (file: TFile): Promise<CanvasData> => {
+		const fileContents = await this.app.vault.read(file);
+		if (!fileContents) {
+			return this.handleEmptyCanvas();
+		}
+		const canvasData = JSON.parse(fileContents) as CanvasData;
+		return canvasData;
+	};
+
+	// if theres no file contents then returns blank CanvasData
+	handleEmptyCanvas = () => {
+		const data: CanvasData = {
+			nodes: [],
+			edges: [],
+		};
+		return data;
+	};
+
+	// creates the node grid from the positions 
+
+	// i think
+	buildFileNodeGrid = (canvasData: CanvasData) => {
+		let notes: TFile[];
+		const filenames = notes.map((note) => note.path);
+		const { noteWidth, noteHeight, x, y } =
+			this.settings;
+		const grid = buildGrid(
+			parseInt(x),
+			parseInt(y)
+		);
+		const fileNodes = grid.map((node, index) => {
+			const fileNode: CanvasFileData = {
+				id: md5(filenames[index]),
+				x: node.x,
+				y: node.y,
+				width: parseInt(noteWidth),
+				height: parseInt(noteHeight),
+				color: "",
+				type: "file",
+				file: `${filenames[index]}`,
+			};
+			return fileNode;
+		});
+		canvasData.nodes = canvasData.nodes.concat(fileNodes);
+		return canvasData;
+	};
+
+	writeCanvasFile = async (file: TFile, canvasData: CanvasData) => {
+		const fileContents = JSON.stringify(canvasData);
+		await this.app.vault.modify(file, fileContents);
+	};
+
+
+	awaitModal = async (): Promise<boolean> => {
+		return new Promise((resolve, reject) => {
+			try {
+				const modal = new InsertModal(this);
+				modal.onClose = () => {
+					resolve(modal.confirmed);
+				};
+				modal.open();
+			} catch (e) {
+				reject();
+			}
+		});
+	};
+
+	addNotesHandler = async ( ) => {
+		try {
+			const activeFile = this.app.workspace.getActiveFile();
+			if (activeFile && this.activeFileIsCanvas(activeFile)) {
+				let canvasContents = await this.getCanvasContents(activeFile);
+				const confirmed = await this.awaitModal();
+				if (!confirmed) {
+					return;
+				}
+				const newContents = this.buildFileNodeGrid(
+					canvasContents
+				);
+				await this.writeCanvasFile(activeFile, newContents);
+			} else {
+				new Notice("No active canvas file.", 5000);
+			}
+		} catch (e) {
+			console.error(e);
+			new Notice(
+				"An unexpected error has occurred. It's possible the Obsidian app is out of sync with the canvas file contents. Wait a few moments before running commands.",
+				5000
+			);
+		}
+	};
+
 
 	async onload() {
 		await this.loadSettings();
@@ -28,41 +220,12 @@ export default class MyPlugin extends Plugin {
 		const statusBarItemEl = this.addStatusBarItem();
 		statusBarItemEl.setText('Status Bar Text');
 
-		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-			}
+			id: "canvas-randomnote-add-notes",
+			name: "Add Notes to Canvas",
+			callback: async () => {
+				this.addNotesHandler();
+			},
 		});
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
@@ -108,9 +271,9 @@ class SampleModal extends Modal {
 }
 
 class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	plugin: ArchnetPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: ArchnetPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
