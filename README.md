@@ -97,3 +97,8 @@ See https://github.com/obsidianmd/obsidian-api
 
 https://github.com/obsidianmd/obsidian-sample-plugin/blob/master/main.ts
 
+
+
+https://github.com/jmilldotdev/obsidian-canvas-randomnote/blob/master/src/types.ts
+https://github.com/AndreBaltazar8/obsidian-canvas-conversation
+https://github.com/Quorafind/Obsidian-Link-Nodes-In-Canvas

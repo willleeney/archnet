@@ -4,9 +4,12 @@ export default class NewNotePlugin extends Plugin {
   async onload() {
     console.log('NewNotePlugin loaded');
 
-    // Add a button to the toolbar
-    this.addRibbonIcon('dice', 'Create New Note', () => {
-      this.addNewCard();
+    this.addCommand({
+      id: 'create-new-note',
+      name: 'Create New Note',
+      callback: () => {
+        this.addNewCard();
+      },
     });
   }
 
