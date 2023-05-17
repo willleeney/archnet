@@ -1,6 +1,5 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, View } from 'obsidian';
 import { CanvasData, CanvasFileData } from "obsidian/canvas";
-import md5 from "md5";
 
 
 interface PluginSettings {
@@ -135,8 +134,6 @@ export default class ArchnetPlugin extends Plugin {
 
 	// i think
 	buildFileNodeGrid = (canvasData: CanvasData) => {
-		let notes: TFile[];
-		const filenames = notes.map((note) => note.path);
 		const { noteWidth, noteHeight, x, y } =
 			this.settings;
 		const grid = buildGrid(
@@ -145,14 +142,13 @@ export default class ArchnetPlugin extends Plugin {
 		);
 		const fileNodes = grid.map((node, index) => {
 			const fileNode: CanvasFileData = {
-				id: md5(filenames[index]),
+				id: 'smtwavrwarb',
 				x: node.x,
 				y: node.y,
 				width: parseInt(noteWidth),
 				height: parseInt(noteHeight),
 				color: "",
 				type: "file",
-				file: `${filenames[index]}`,
 			};
 			return fileNode;
 		});
