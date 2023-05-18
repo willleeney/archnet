@@ -111,12 +111,12 @@ export default class ArchnetPlugin extends Plugin {
 		let canvasContents = await this.getCanvasContents(activeFile);
 
 		// get the current selected node
-		const selectedNode = this.getActiveNode()
+		const selectedNode = this.getActiveNode();
 		
 		const xOffset = [-400, 0, 400];
 		for (let i = 0; i < xOffset.length; i++) {
 			// create new node and add to canvas
-			const targetNode = this.createNode(selectedNode.x + xOffset[i], selectedNode.y - 500));
+			const targetNode = this.createNode(selectedNode.x + xOffset[i], selectedNode.y - 500);
 			new Notice('created node');
 			canvasContents.nodes = canvasContents.nodes.concat(targetNode);
 			new Notice('added node');
@@ -129,7 +129,7 @@ export default class ArchnetPlugin extends Plugin {
 				fromSide: 'bottom',
 				toSide: 'top'
 			};
-			canvasContents.edges = canvasContents.edges.concat(newConnection)
+			canvasContents.edges = canvasContents.edges.concat(newConnection);
 		}
 
 		// write the updates to the file
