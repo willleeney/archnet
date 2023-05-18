@@ -102,3 +102,10 @@ https://github.com/obsidianmd/obsidian-sample-plugin/blob/master/main.ts
 https://github.com/jmilldotdev/obsidian-canvas-randomnote/blob/master/src/types.ts
 https://github.com/AndreBaltazar8/obsidian-canvas-conversation
 https://github.com/Quorafind/Obsidian-Link-Nodes-In-Canvas
+
+
+chat gpt api
+https://github.com/transitive-bullshit/chatgpt-api
+
+relevance node search 
+https://github.com/whacked/obsidian-relevance-engine/blob/2023-01_get-something-working/main.ts
