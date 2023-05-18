@@ -160,39 +160,19 @@ export default class ArchnetPlugin extends Plugin {
 
 		const openai = new OpenAIApi(configuration);
 
-		const response = openai.createCompletion({
+		const res: any = await openai.createCompletion({
 			model: "text-davinci-002",
 			prompt: promptHistory,
 			max_tokens: this.settings.maxTokens,
 			top_p: 1.0,
 			frequency_penalty: this.settings.frequencyPenalty,
 			presence_penalty: this.settings.presencePenalty,
-		}).then((res) => {console.log(res.data.choices[0].text)});
-
-		console.log(response.data.choices[0].text)
-
-		try {
-			const response = openai.createCompletion({
-				model: "text-davinci-002",
-				prompt: promptHistory,
-				max_tokens: this.settings.maxTokens,
-				top_p: 1.0,
-				frequency_penalty: this.settings.frequencyPenalty,
-				presence_penalty: this.settings.presencePenalty,
-			}).then((res) => {console.log(res.data.choices[0].text)});
-		
-		// Response will be in that precise text, but you can explore the full object if you want to
-		//res.send(completion.data.choices[0].text);
-		} catch (error: any) {
-			if (error.response) {
-				console.error(error.response.status);
-				console.error(error.response.data);
-			} else {
-				console.error(error.message);
-			}
-		}
+		}).then((response) => {JSON.parse(response)}).catch((err) => {
+			console.error(err);
+		  });
 
 
+    	let completion = res?.completions?.[0]?.data?.text ?? null;
 		
 		const xOffset = [-500, 0, 500];
 		for (let i = 0; i < xOffset.length; i++) {
