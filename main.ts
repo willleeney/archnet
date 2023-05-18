@@ -1,8 +1,21 @@
 import { Plugin, MarkdownView, TFile, WorkspaceLeaf, Notice } from 'obsidian';
 import { CanvasData, CanvasTextData } from "obsidian/canvas";
 
+// function to create a random identifier
+function makeid(length) {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < length) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      counter += 1;
+    }
+    return result;
+}
 
-export default class NewNotePlugin extends Plugin {
+
+export default class ArchnetPlugin extends Plugin {
 
 	// gets the contents of the canvas
 	getCanvasContents = async (file: TFile): Promise<CanvasData> => {
@@ -23,10 +36,11 @@ export default class NewNotePlugin extends Plugin {
 		return data;
 	};
 
+	// creates a new node at 0,0 with text hello world
 	createNode = (canvasData: CanvasData) => {
 
 		const fileNode: CanvasTextData = {
-			id: 'smtwavrwarb',
+			id: makeid(20),
 			x: 0,
 			y: 0,
 			width: 100,
@@ -39,6 +53,7 @@ export default class NewNotePlugin extends Plugin {
 		return canvasData;
 	};
 
+	// overwrites the file contexts with the new data
 	writeCanvasFile = async (file: TFile, canvasData: CanvasData) => {
 		const fileContents = JSON.stringify(canvasData);
 		await this.app.vault.modify(file, fileContents);
@@ -51,11 +66,11 @@ export default class NewNotePlugin extends Plugin {
 
 
   async onload() {
-    console.log('NewNotePlugin loaded');
+    console.log('ArchnetPlugin loaded');
 
     this.addCommand({
-      id: 'create-new-note',
-      name: 'Create New Note',
+      id: 'create-new-card',
+      name: 'Create New Card',
       callback: () => {
         this.createNewCard();
       },
