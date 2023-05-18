@@ -99,14 +99,14 @@ export default class ArchnetPlugin extends Plugin {
 		// const selectedNode = Array.from(this.canvas.selection)[0];
 		// console.log(selectedNode);
 
-		const otherselectedNode = this.app.workspace.activeLeaf.view.editor.getSelection().anchorNode;
-		console.log(otherselectedNode);
+		// const otherselectedNode = this.app.workspace.activeLeaf.view.leaf
+		// console.log(otherselectedNode);
 
-		const newselectedNode = this.app.workspace.activeLeaf.getSelection();
-		console.log(newselectedNode);
+		// const newselectedNode = this.app.workspace.activeLeaf.getSelection();
+		// console.log(newselectedNode);
 
 
-		const theactiveLeaf = this.app.workspace.getActiveFile();
+		const theactiveLeaf = this.app.workspace.activeLeaf
 		console.log(theactiveLeaf);
 
 
