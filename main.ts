@@ -15,32 +15,31 @@ function makeid(length) {
 }
 
 
-function getTextFromNode(node: TAbstractFile): string {
-  	if (node instanceof TFile) {
-    	const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-		if (view && view.file === node) {
-			return view.editor.getValue();
+function getAllTextFromParentNodes(canvasContents: CanvasData, nodeID: string): string {
+	const nodeTexts = [''];
+	let currentParentSearching = true; 
+
+	do {
+		// Iterate through `canvasContents.edges`
+		for (const edge of canvasContents.edges) {
+			if (edge.toNode === nodeID) {
+				const fromNode = canvasContents.nodes.find(node => nodeID === edge.fromNode);
+				if (fromNode) {
+					nodeTexts.push(fromNode.text);
+					break;
+				} else {
+					currentParentSearching = false;
+				}
+				
+			}
 		}
-	} else if (node instanceof TFolder) {
-		let text = '';
-		const childNodes = node.children;
-		for (const childNode of childNodes) {
-			text += getTextFromNode(childNode);
-		}
-			return text;
-	}
-	return '';
-}
+	} while (currentParentSearching === true);
+  	
+	const promptHistory = nodeTexts.reduceRight((accumulator, currentValue) => {
+		return accumulator + ' ' + currentValue;
+	  });
 
-
-function getAllTextFromParentNodes(node: TAbstractFile): string {
-  let text = getTextFromNode(node);
-
-  if (node.parent) {
-    	text += getAllTextFromParentNodes(node.parent);
-  }
-
-  return text;
+    return promptHistory;
 }
 
 
@@ -65,7 +64,7 @@ export default class ArchnetPlugin extends Plugin {
 		return data;
 	};
 
-	createNode = (xcord, ycord, promptHistory) => {
+	createNode = (xcord: number, ycord: number, promptHistory: string) => {
 
 		const fileNode: CanvasTextData = {
 			id: makeid(20),
@@ -143,7 +142,7 @@ export default class ArchnetPlugin extends Plugin {
 		const selectedNode = this.getActiveNode();
 
 		// aggregates all the text from the parent nodes 
-		const promptHistory = getAllTextFromParentNodes(selectedNode)
+		const promptHistory = getAllTextFromParentNodes(canvasContents, selectedNode.id)
 		
 		
 		const xOffset = [-500, 0, 500];
