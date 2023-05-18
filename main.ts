@@ -74,13 +74,14 @@ export default class ArchnetPlugin extends Plugin {
       callback: () => {
         this.createNewCard();
       },
+	  hotkeys: [
+        {
+          modifiers: ["Mod"],
+          key: "d",
+        },
+      ],
     });
 
-	this.addHotkey({
-		key: 'D',
-		modifiers: ['Opt'],
-		action: 'create-new-card',
-	  });
 
   }
 
