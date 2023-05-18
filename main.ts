@@ -160,6 +160,7 @@ export default class ArchnetPlugin extends Plugin {
 		});
 
 		const openai = new OpenAIApi(configuration);
+		new Notice("generating completions")
 
 		let res: NextApiResponse = await openai.createCompletion({
 			model: "text-davinci-002",
@@ -168,19 +169,16 @@ export default class ArchnetPlugin extends Plugin {
 			top_p: 1.0,
 			frequency_penalty: this.settings.frequencyPenalty,
 			presence_penalty: this.settings.presencePenalty,
-		});
+			n: this.settings.nCompletions,
+		}).catch((err) => {console.error(err)});
 		
-		//.then((response) => {JSON.parse(response)}).catch((err) => {
-		//	console.error(err);
-		//  });
-		let compl = res.status(200).json({data: res.data});
-
-    	let completion = res?.completions?.[0]?.data?.text ?? null;
+		const choices = res.data.choices;
+		const completions = choices.map(choice => choice.text);
 		
 		const xOffset = [-500, 0, 500];
 		for (let i = 0; i < xOffset.length; i++) {
 			// create new node and add to canvas
-			const targetNode = this.createNode(selectedNode.x - xOffset[i], selectedNode.y + 500, promptHistory);
+			const targetNode = this.createNode(selectedNode.x - xOffset[i], selectedNode.y + 500, completions[i]);
 			new Notice('created node');
 			canvasContents.nodes = canvasContents.nodes.concat(targetNode);
 			new Notice('added node');
@@ -224,6 +222,7 @@ interface ArchnetSettings {
 	temperature: number;
 	frequencyPenalty: number;
 	presencePenalty: number;
+	nCompletions: number;
 }
 
 const DEFAULT_SETTINGS: ArchnetSettings = {
@@ -232,6 +231,7 @@ const DEFAULT_SETTINGS: ArchnetSettings = {
 	temperature: 1.0,
 	frequencyPenalty: 0.0,
 	presencePenalty: 0.0,
+	nCompletions: 3,
 }
 
 
@@ -307,6 +307,18 @@ class ArchnetSettingTab extends PluginSettingTab {
 			.onChange(async (value) => {
 				console.log('Presence Penalty: ' + value);
 				this.plugin.settings.presencePenalty = value;
+			await this.plugin.saveSettings();
+			}));
+		
+		new Setting(containerEl)
+		.setName('N Completions')
+		.setDesc('Number of different threads to generate')
+		.addText(text => text
+			.setPlaceholder('enter a number3')
+			.setValue(this.plugin.settings.nCompletions)
+			.onChange(async (value) => {
+				console.log('nCompletions: ' + value);
+				this.plugin.settings.nCompletions = value;
 			await this.plugin.saveSettings();
 			}));
 	}
