@@ -72,7 +72,7 @@ export default class ArchnetPlugin extends Plugin {
 		const theactiveCanvas = this.getActiveCanvas();
 		const selectedNodes = theactiveCanvas.selection
 		if (selectedNodes.size === 1) {
-			return selectedNodes[0].value
+			return Array.from(selectedNodes)[0]
 
 		} else {
 			new Notice('need to select a single node')
@@ -116,7 +116,6 @@ export default class ArchnetPlugin extends Plugin {
 		// get the current selected node
 		const selectedNode = this.getActiveNode()
 		new Notice(selectedNode.id);
-
 		
 		// create new node and add to canvas
 		const targetNode = this.createNode();
