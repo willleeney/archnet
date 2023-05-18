@@ -1,6 +1,7 @@
 import { App, Plugin, MarkdownView, TFile,  Notice, TFolder, TAbstractFile, PluginSettingTab, Setting } from 'obsidian';
 import { CanvasData, CanvasTextData } from "obsidian/canvas";
 import { Configuration, OpenAIApi } from "openai";
+import {NextApiRequest, NextApiResponse} from 'next';
 
 // function to create a random identifier
 function makeid(length) {
@@ -160,17 +161,19 @@ export default class ArchnetPlugin extends Plugin {
 
 		const openai = new OpenAIApi(configuration);
 
-		const res: any = await openai.createCompletion({
+		let res: NextApiResponse = await openai.createCompletion({
 			model: "text-davinci-002",
 			prompt: promptHistory,
 			max_tokens: this.settings.maxTokens,
 			top_p: 1.0,
 			frequency_penalty: this.settings.frequencyPenalty,
 			presence_penalty: this.settings.presencePenalty,
-		}).then((response) => {JSON.parse(response)}).catch((err) => {
-			console.error(err);
-		  });
-
+		});
+		
+		//.then((response) => {JSON.parse(response)}).catch((err) => {
+		//	console.error(err);
+		//  });
+		let compl = res.status(200).json({data: res.data});
 
     	let completion = res?.completions?.[0]?.data?.text ?? null;
 		
