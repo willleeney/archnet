@@ -167,7 +167,7 @@ export default class ArchnetPlugin extends Plugin {
 			top_p: 1.0,
 			frequency_penalty: this.settings.frequencyPenalty,
 			presence_penalty: this.settings.presencePenalty,
-		});
+		}).then((res) => {console.log(res.data.choices[0].text)});
 
 		console.log(response.data.choices[0].text)
 
