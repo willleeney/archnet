@@ -93,8 +93,24 @@ export default class ArchnetPlugin extends Plugin {
 		let canvasContents = await this.getCanvasContents(activeFile);
 		new Notice('got content');
 
+		const name = 'John';
+		console.log(name);
+
+		const selectedNode = Array.from(this.canvas.selection)[0];
+		console.log(selectedNode);
+
+		const otherselectedNode = this.app.workspace.activeLeaf.view.editor.getSelection().anchorNode;
+		console.log(otherselectedNode);
+
+		const newselectedNode = this.app.workspace.activeLeaf.getSelection();
+		console.log(newselectedNode);
+
+
 		const activeLeaf = this.app.workspace.activeLeaf;
 		const activeView = activeLeaf.view;
+
+
+
 		if (activeView instanceof MarkdownView) {
 			//const selectedText = activeView.editor.getSelection();
 			// or
