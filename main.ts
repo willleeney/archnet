@@ -68,6 +68,20 @@ export default class ArchnetPlugin extends Plugin {
 		return maybeCanvasView ? (maybeCanvasView as any)['canvas'] : null
 	}
 
+	getActiveNode(): any {
+		const theactiveCanvas = this.getActiveCanvas();
+		const selectedNodes = theactiveCanvas.selection
+		if (selectedNodes.size === 0) {
+			return selectedNodes[0].value
+
+		} else {
+			new Notice('need to select a single node')
+			return null
+		}
+
+	}
+	
+
 
   async onload() {
     console.log('ArchnetPlugin loaded');
@@ -95,26 +109,13 @@ export default class ArchnetPlugin extends Plugin {
     const activeFile = this.app.workspace.getActiveFile();
 	if (activeFile && this.activeFileIsCanvas(activeFile)) {
 
+		// get the content of the canvas
 		let canvasContents = await this.getCanvasContents(activeFile);
-		new Notice('got content');
+		new Notice('got content of canvas');
 
-		const name = 'John';
-		console.log(name);
-
-		// const selectedNode = Array.from(this.canvas.selection)[0];
-		// console.log(selectedNode);
-
-		// const otherselectedNode = this.app.workspace.activeLeaf.view.leaf
-		// console.log(otherselectedNode);
-
-		// const newselectedNode = this.app.workspace.activeLeaf.getSelection();
-		// console.log(newselectedNode);
-
-
-		const theactiveCanvas = this.getActiveCanvas();
-		console.log(theactiveCanvas.nodes[0].id);
-		new Notice('got node');
-		const selectedNode = theactiveCanvas.nodes[0]
+		// get the current selected node
+		const selectedNode = this.getActiveNode()
+		new Notice(selectedNode.id);
 
 		
 		// create new node and add to canvas
@@ -129,11 +130,9 @@ export default class ArchnetPlugin extends Plugin {
 			target: targetNode.id,
 			type: 'arrow',
 		};
-		
 		canvasContents.edges = canvasContents.edges.concat(newConnection)
 
-		
-
+		// write the updates to the file
 		await this.writeCanvasFile(activeFile, canvasContents);
 		new Notice('wrote contents');
   		}
