@@ -35,7 +35,7 @@ export default class NewNotePlugin extends Plugin {
 			text: "hello world?"
 		};
 
-		canvasData.nodes = canvasData.nodes.concat(fileNode)
+		canvasData.nodes = canvasData.nodes.concat(fileNode);
 		return canvasData;
 	};
 
@@ -60,7 +60,7 @@ export default class NewNotePlugin extends Plugin {
   }
 
   async createNewCard() {
-	new Notice('active .')
+	new Notice('active .');
 
     const activeFile = this.app.workspace.getActiveFile();
 	if (activeFile && this.activeFileIsCanvas(activeFile)) {
