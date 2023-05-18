@@ -71,7 +71,7 @@ export default class ArchnetPlugin extends Plugin {
 	getActiveNode(): any {
 		const theactiveCanvas = this.getActiveCanvas();
 		const selectedNodes = theactiveCanvas.selection
-		if (selectedNodes.size === 0) {
+		if (selectedNodes.size === 1) {
 			return selectedNodes[0].value
 
 		} else {
