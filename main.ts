@@ -63,6 +63,11 @@ export default class ArchnetPlugin extends Plugin {
 		return file.extension === "canvas";
 	};
 
+	getActiveCanvas(): any {
+		const maybeCanvasView = this.app.workspace.getLeaf().view
+		return maybeCanvasView ? (maybeCanvasView as any)['canvas'] : null
+	}
+
 
   async onload() {
     console.log('ArchnetPlugin loaded');
@@ -106,33 +111,28 @@ export default class ArchnetPlugin extends Plugin {
 		// console.log(newselectedNode);
 
 
-		const theactiveLeaf = this.app.workspace.activeLeaf
-		console.log(theactiveLeaf);
+		const theactiveCanvas = this.getActiveCanvas();
+		console.log(theactiveCanvas.nodes[0].id);
+		new Notice('got node');
+		const selectedNode = theactiveCanvas.nodes[0]
 
+		
+		// create new node and add to canvas
+		const targetNode = this.createNode();
+		new Notice('created node');
+		canvasContents.nodes = canvasContents.nodes.concat(targetNode);
+		new Notice('added node');
 
-		if (activeView instanceof MarkdownView) {
-			//const selectedText = activeView.editor.getSelection();
-			// or
-			const selectedNode = activeView.editor.getSelection().anchorNode;
-			// Process the selected text or node
-			new Notice('found selected node');
-			
-			// create new node and add to canvas
-			const targetNode = this.createNode();
-			new Notice('created node');
-			canvasContents.nodes = canvasContents.nodes.concat(targetNode);
-			new Notice('added node');
+		// Create a connection between the selected node and the new node
+		const newConnection = {
+			source: selectedNode.id,
+			target: targetNode.id,
+			type: 'arrow',
+		};
+		
+		canvasContents.edges = canvasContents.edges.concat(newConnection)
 
-			// Create a connection between the selected node and the new node
-			const newConnection = {
-				source: selectedNode.id,
-				target: targetNode.id,
-				type: 'arrow',
-			};
-			
-			canvasContents.edges = canvasContents.edges.concat(newConnection)
-
-		}
+		
 
 		await this.writeCanvasFile(activeFile, canvasContents);
 		new Notice('wrote contents');
