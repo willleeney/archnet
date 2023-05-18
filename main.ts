@@ -145,8 +145,8 @@ export default class ArchnetPlugin extends Plugin {
 		const selectedNode = this.getActiveNode();
 
 		// aggregates all the text from the parent nodes 
-		const promptHistory = getAllTextFromParentNodes(canvasContents, selectedNode.id)
-		new Notice(promptHistory)
+		let promptHistory = getAllTextFromParentNodes(canvasContents, selectedNode.id)
+		promptHistory += selectedNode.text
 		
 		const xOffset = [-500, 0, 500];
 		for (let i = 0; i < xOffset.length; i++) {
