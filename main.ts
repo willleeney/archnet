@@ -23,7 +23,7 @@ function getAllTextFromParentNodes(canvasContents: CanvasData, nodeID: string): 
 		// Iterate through `canvasContents.edges`
 		for (const edge of canvasContents.edges) {
 			if (edge.toNode === nodeID) {
-				const fromNode = canvasContents.nodes.find(node => nodeID === edge.fromNode);
+				const fromNode = canvasContents.nodes.find(node => node.id === edge.fromNode);
 				if (fromNode) {
 					nodeTexts.push(fromNode.text);
 					break;
