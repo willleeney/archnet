@@ -125,9 +125,11 @@ export default class ArchnetPlugin extends Plugin {
 
 		// Create a connection between the selected node and the new node
 		const newConnection = {
-			source: selectedNode.id,
-			target: targetNode.id,
-			type: 'arrow',
+			id: makeid(20),
+			fromNode: selectedNode.id,
+			toNode: targetNode.id,
+			fromSide: 'bottom',
+			toSide: 'top'
 		};
 		canvasContents.edges = canvasContents.edges.concat(newConnection)
 
