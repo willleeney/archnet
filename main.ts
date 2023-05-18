@@ -14,56 +14,6 @@ function makeid(length) {
     return result;
 }
 
-interface PluginSettings {
-	secretKey: string;
-	aNumberParam: string;
-
-}
-
-const DEFAULT_SETTINGS: PluginSettings = {
-	secretKey: "this-needs-replacing",
-	aNumberParam: '1.0'
-
-	
-};
-
-class SampleSettingTab extends PluginSettingTab {
-	plugin: ArchnetPlugin;
-	confirmed: boolean = false;
-
-	constructor(app: App, plugin: ArchnetPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const {contentEl} = this;
-
-		contentEl.empty();
-
-		contentEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
-
-		new Setting(contentEl).setName("Secret Key").addText((text) =>
-			text.setValue(settings.secretKey).onChange(async (value) => {
-				settings.secretKey = value;
-				await this.plugin.saveSettings();
-			})
-		);
-
-		new Setting(contentEl)
-			.setName("aNumberParam")
-			.setDesc("some random describtion")
-			.addText((text) =>
-				text.setValue(settings.aNumberParam).onChange(async (value) => {
-					settings.aNumberParam = value;
-					await this.plugin.saveSettings();
-				})
-			);
-
-
-	}
-}
-
 function getAllTextFromParentNodes(canvasContents: CanvasData, nodeID: string): string {
 	const nodeTexts = [''];
 	let currentParentSearching = true; 
@@ -96,7 +46,7 @@ function getAllTextFromParentNodes(canvasContents: CanvasData, nodeID: string): 
 
 
 export default class ArchnetPlugin extends Plugin {
-	settings: PluginSettings;
+	settings: MyPluginSettings;
 
 	// gets the contents of the canvas
 	getCanvasContents = async (file: TFile): Promise<CanvasData> => {
@@ -165,8 +115,7 @@ export default class ArchnetPlugin extends Plugin {
   async onload() {
 	await this.loadSettings();
 	// This adds a settings tab so the user can configure various aspects of the plugin
-	this.addSettingTab(new SampleSettingTab(this.app, this));
-
+	this.addSettingTab(new ArchnetSettingTab(this.app, this));
     console.log('ArchnetPlugin loaded');
 
     this.addCommand({
@@ -241,4 +190,42 @@ export default class ArchnetPlugin extends Plugin {
 	  await this.saveData(this.settings);
   }
 
+}
+
+interface ArchnetSettings {
+	mySetting: string;
+}
+
+const DEFAULT_SETTINGS: ArchnetSettings = {
+	mySetting: 'default'
+}
+
+
+class ArchnetSettingTab extends PluginSettingTab {
+	plugin: ArchnetPlugin;
+
+	constructor(app: App, plugin: ArchnetPlugin) {
+		super(app, plugin);
+		this.plugin = plugin;
+	}
+
+	display(): void {
+		const {containerEl} = this;
+
+		containerEl.empty();
+
+		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+
+		new Setting(containerEl)
+			.setName('Setting #1')
+			.setDesc('It\'s a secret')
+			.addText(text => text
+				.setPlaceholder('Enter your secret')
+				.setValue(this.plugin.settings.mySetting)
+				.onChange(async (value) => {
+					console.log('Secret: ' + value);
+					this.plugin.settings.mySetting = value;
+					await this.plugin.saveSettings();
+				}));
+	}
 }
