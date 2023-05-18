@@ -1,4 +1,4 @@
-import { Plugin, MarkdownView, TFile, WorkspaceLeaf, Notice } from 'obsidian';
+import { Plugin, MarkdownView, TFile,  Notice, TFolder, TAbstractFile } from 'obsidian';
 import { CanvasData, CanvasTextData } from "obsidian/canvas";
 
 // function to create a random identifier
@@ -12,6 +12,35 @@ function makeid(length) {
       counter += 1;
     }
     return result;
+}
+
+
+function getTextFromNode(node: TAbstractFile): string {
+  	if (node instanceof TFile) {
+    	const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (view && view.file === node) {
+			return view.editor.getValue();
+		}
+	} else if (node instanceof TFolder) {
+		let text = '';
+		const childNodes = node.children;
+		for (const childNode of childNodes) {
+			text += getTextFromNode(childNode);
+		}
+			return text;
+	}
+	return '';
+}
+
+
+function getAllTextFromParentNodes(node: TAbstractFile): string {
+  let text = getTextFromNode(node);
+
+  if (node.parent) {
+    	text += getAllTextFromParentNodes(node.parent);
+  }
+
+  return text;
 }
 
 
@@ -36,7 +65,7 @@ export default class ArchnetPlugin extends Plugin {
 		return data;
 	};
 
-	createNode = (xcord, ycord) => {
+	createNode = (xcord, ycord, promptHistory) => {
 
 		const fileNode: CanvasTextData = {
 			id: makeid(20),
@@ -45,7 +74,7 @@ export default class ArchnetPlugin extends Plugin {
 			width: 400,
 			height: 250,
 			type: "text",
-			text: "placement text"
+			text: promptHistory
 		};
 
 		return fileNode;
@@ -112,11 +141,15 @@ export default class ArchnetPlugin extends Plugin {
 
 		// get the current selected node
 		const selectedNode = this.getActiveNode();
+
+		// aggregates all the text from the parent nodes 
+		const promptHistory = getAllTextFromParentNodes(selectedNode)
+		
 		
 		const xOffset = [-500, 0, 500];
 		for (let i = 0; i < xOffset.length; i++) {
 			// create new node and add to canvas
-			const targetNode = this.createNode(selectedNode.x - xOffset[i], selectedNode.y + 500);
+			const targetNode = this.createNode(selectedNode.x - xOffset[i], selectedNode.y + 500, promptHistory);
 			new Notice('created node');
 			canvasContents.nodes = canvasContents.nodes.concat(targetNode);
 			new Notice('added node');
