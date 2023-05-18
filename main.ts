@@ -37,7 +37,7 @@ export default class ArchnetPlugin extends Plugin {
 	};
 
 	// creates a new node at 0,0 with text hello world
-	createNode = (canvasData: CanvasData) => {
+	createNode = () => {
 
 		const fileNode: CanvasTextData = {
 			id: makeid(20),
@@ -49,8 +49,7 @@ export default class ArchnetPlugin extends Plugin {
 			text: "hello world?"
 		};
 
-		canvasData.nodes = canvasData.nodes.concat(fileNode);
-		return canvasData;
+		return fileNode;
 	};
 
 	// overwrites the file contexts with the new data
@@ -92,13 +91,35 @@ export default class ArchnetPlugin extends Plugin {
 	if (activeFile && this.activeFileIsCanvas(activeFile)) {
 
 		let canvasContents = await this.getCanvasContents(activeFile);
-		new Notice('created node');
-    
-		const newContents = this.createNode(canvasContents);
-		new Notice('created node');
+		new Notice('got content');
 
+		const activeLeaf = this.app.workspace.activeLeaf;
+		const activeView = activeLeaf.view;
+		if (activeView instanceof MarkdownView) {
+			//const selectedText = activeView.editor.getSelection();
+			// or
+			const selectedNode = activeView.editor.getSelection().anchorNode;
+			// Process the selected text or node
+			new Notice('found selected node');
+			
+			// create new node and add to canvas
+			const targetNode = this.createNode();
+			new Notice('created node');
+			canvasContents.nodes = canvasContents.nodes.concat(targetNode);
+			new Notice('added node');
 
-		await this.writeCanvasFile(activeFile, newContents);
+			// Create a connection between the selected node and the new node
+			const newConnection = {
+				source: selectedNode.id,
+				target: targetNode.id,
+				type: 'arrow',
+			};
+			
+			canvasContents.edges = canvasContents.edges.concat(newConnection)
+
+		}
+
+		await this.writeCanvasFile(activeFile, canvasContents);
 		new Notice('wrote contents');
   		}
 	else {
