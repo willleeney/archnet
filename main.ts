@@ -26,6 +26,7 @@ function getAllTextFromParentNodes(canvasContents: CanvasData, nodeID: string): 
 				const fromNode = canvasContents.nodes.find(node => node.id === edge.fromNode);
 				if (fromNode) {
 					nodeTexts.push(fromNode.text);
+					nodeID = fromNode.id
 					break;
 				} else {
 					currentParentSearching = false;
