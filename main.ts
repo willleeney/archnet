@@ -1,4 +1,4 @@
-import { Plugin, MarkdownView, TFile,  Notice, TFolder, TAbstractFile } from 'obsidian';
+import { App, Plugin, MarkdownView, TFile,  Notice, TFolder, TAbstractFile, PluginSettingTab, Setting } from 'obsidian';
 import { CanvasData, CanvasTextData } from "obsidian/canvas";
 
 // function to create a random identifier
@@ -14,6 +14,55 @@ function makeid(length) {
     return result;
 }
 
+interface PluginSettings {
+	secretKey: string;
+	aNumberParam: string;
+
+}
+
+const DEFAULT_SETTINGS: PluginSettings = {
+	secretKey: "this-needs-replacing",
+	aNumberParam: '1.0'
+
+	
+};
+
+class SampleSettingTab extends PluginSettingTab {
+	plugin: ArchnetPlugin;
+	confirmed: boolean = false;
+
+	constructor(app: App, plugin: ArchnetPlugin) {
+		super(app, plugin);
+		this.plugin = plugin;
+	}
+
+	display(): void {
+		const {contentEl} = this;
+
+		contentEl.empty();
+
+		contentEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+
+		new Setting(contentEl).setName("Secret Key").addText((text) =>
+			text.setValue(settings.secretKey).onChange(async (value) => {
+				settings.secretKey = value;
+				await this.plugin.saveSettings();
+			})
+		);
+
+		new Setting(contentEl)
+			.setName("aNumberParam")
+			.setDesc("some random describtion")
+			.addText((text) =>
+				text.setValue(settings.aNumberParam).onChange(async (value) => {
+					settings.aNumberParam = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+
+	}
+}
 
 function getAllTextFromParentNodes(canvasContents: CanvasData, nodeID: string): string {
 	const nodeTexts = [''];
@@ -47,6 +96,7 @@ function getAllTextFromParentNodes(canvasContents: CanvasData, nodeID: string): 
 
 
 export default class ArchnetPlugin extends Plugin {
+	settings: PluginSettings;
 
 	// gets the contents of the canvas
 	getCanvasContents = async (file: TFile): Promise<CanvasData> => {
@@ -113,6 +163,10 @@ export default class ArchnetPlugin extends Plugin {
 	
 
   async onload() {
+	await this.loadSettings();
+	// This adds a settings tab so the user can configure various aspects of the plugin
+	this.addSettingTab(new SampleSettingTab(this.app, this));
+
     console.log('ArchnetPlugin loaded');
 
     this.addCommand({
@@ -174,5 +228,17 @@ export default class ArchnetPlugin extends Plugin {
 		new Notice("No active canvas file.", 5000);
 	}
   };
+
+  onunload() {
+
+  }
+
+  async loadSettings() {
+	  this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+
+  async saveSettings() {
+	  await this.saveData(this.settings);
+  }
 
 }
