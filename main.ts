@@ -21,19 +21,21 @@ function getAllTextFromParentNodes(canvasContents: CanvasData, nodeID: string): 
 
 	do {
 		// Iterate through `canvasContents.edges`
-		for (const edge of canvasContents.edges) {
-			if (edge.toNode === nodeID) {
-				const fromNode = canvasContents.nodes.find(node => node.id === edge.fromNode);
-				if (fromNode) {
-					nodeTexts.push(fromNode.text);
-					nodeID = fromNode.id
-					break;
-				} else {
-					currentParentSearching = false;
-				}
-				
+
+		const connectEdge = canvasContents.edges.find(edge => edge.toNode === nodeID);
+		if (connectEdge) {
+			const fromNode = canvasContents.nodes.find(node => node.id === connectEdge.fromNode);
+			if (fromNode) {
+				nodeTexts.push(fromNode.text);
+				nodeID = fromNode.id
+			} else {
+				currentParentSearching = false;
 			}
+
+		} else {
+			currentParentSearching = false;
 		}
+		
 	} while (currentParentSearching === true);
   	
 	const promptHistory = nodeTexts.reduceRight((accumulator, currentValue) => {
