@@ -1,5 +1,6 @@
 import { App, Plugin, MarkdownView, TFile,  Notice, TFolder, TAbstractFile, PluginSettingTab, Setting } from 'obsidian';
 import { CanvasData, CanvasTextData } from "obsidian/canvas";
+import { Configuration, OpenAIApi } from "openai";
 
 // function to create a random identifier
 function makeid(length) {
@@ -46,7 +47,7 @@ function getAllTextFromParentNodes(canvasContents: CanvasData, nodeID: string): 
 
 
 export default class ArchnetPlugin extends Plugin {
-	settings: MyPluginSettings;
+	settings: ArchnetSettings;
 
 	// gets the contents of the canvas
 	getCanvasContents = async (file: TFile): Promise<CanvasData> => {
@@ -152,7 +153,45 @@ export default class ArchnetPlugin extends Plugin {
 		promptHistory += selectedNode.text
 
 
+
+		const configuration = new Configuration({
+			apiKey: this.settings.secretKey,
+		});
+
+		const openai = new OpenAIApi(configuration);
+
+		const response = openai.createCompletion({
+			model: "text-davinci-002",
+			prompt: promptHistory,
+			max_tokens: this.settings.maxTokens,
+			top_p: 1.0,
+			frequency_penalty: this.settings.frequencyPenalty,
+			presence_penalty: this.settings.presencePenalty,
+		});
+
+		console.log(response.data.choices[0].text)
+
+		try {
+			const response = openai.createCompletion({
+				model: "text-davinci-002",
+				prompt: promptHistory,
+				max_tokens: this.settings.maxTokens,
+				top_p: 1.0,
+				frequency_penalty: this.settings.frequencyPenalty,
+				presence_penalty: this.settings.presencePenalty,
+			}).then((res) => {console.log(res.data.choices[0].text)});
 		
+		// Response will be in that precise text, but you can explore the full object if you want to
+		//res.send(completion.data.choices[0].text);
+		} catch (error: any) {
+			if (error.response) {
+				console.error(error.response.status);
+				console.error(error.response.data);
+			} else {
+				console.error(error.message);
+			}
+		}
+
 
 		
 		const xOffset = [-500, 0, 500];
@@ -198,10 +237,18 @@ export default class ArchnetPlugin extends Plugin {
 
 interface ArchnetSettings {
 	secretKey: string;
+	maxTokens: number;
+	temperature: number;
+	frequencyPenalty: number;
+	presencePenalty: number;
 }
 
 const DEFAULT_SETTINGS: ArchnetSettings = {
-	secretKey: 'default'
+	secretKey: '',
+	maxTokens: 64,
+	temperature: 1.0,
+	frequencyPenalty: 0.0,
+	presencePenalty: 0.0,
 }
 
 
@@ -231,5 +278,53 @@ class ArchnetSettingTab extends PluginSettingTab {
 					this.plugin.settings.secretKey = value;
 					await this.plugin.saveSettings();
 				}));
+
+		new Setting(containerEl)
+		.setName('Max Tokens')
+		.setDesc('Specifies the maximum number of tokens in the generated completion')
+		.addText(text => text
+			.setPlaceholder('Enter the maximum number of tokens')
+			.setValue(this.plugin.settings.maxTokens)
+			.onChange(async (value) => {
+				console.log('Max Tokens: ' + value);
+				this.plugin.settings.maxTokens = value;
+			await this.plugin.saveSettings();
+			}));
+
+		new Setting(containerEl)
+		.setName('Temperature')
+		.setDesc('Controls the randomness of the output')
+		.addText(text => text
+			.setPlaceholder('Enter the temperature value')
+			.setValue(this.plugin.settings.temperature)
+			.onChange(async (value) => {
+				console.log('Temperature: ' + value);
+				this.plugin.settings.temperature = value;
+			await this.plugin.saveSettings();
+			}));
+		
+		new Setting(containerEl)
+		.setName('Frequency Penalty')
+		.setDesc('Controls the likelihood of generating repetitive phrases')
+		.addText(text => text
+			.setPlaceholder('Enter the frequency penalty value')
+			.setValue(this.plugin.settings.frequencyPenalty)
+			.onChange(async (value) => {
+				console.log('Frequency Penalty: ' + value);
+				this.plugin.settings.frequencyPenalty = value;
+			await this.plugin.saveSettings();
+			}));
+		
+		new Setting(containerEl)
+		.setName('Presence Penalty')
+		.setDesc('Controls the likelihood of introducing new topics or concepts')
+		.addText(text => text
+			.setPlaceholder('Enter the presence penalty value')
+			.setValue(this.plugin.settings.presencePenalty)
+			.onChange(async (value) => {
+				console.log('Presence Penalty: ' + value);
+				this.plugin.settings.presencePenalty = value;
+			await this.plugin.saveSettings();
+			}));
 	}
 }
