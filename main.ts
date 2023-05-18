@@ -39,6 +39,16 @@ export default class NewNotePlugin extends Plugin {
 		return canvasData;
 	};
 
+	writeCanvasFile = async (file: TFile, canvasData: CanvasData) => {
+		const fileContents = JSON.stringify(canvasData);
+		await this.app.vault.modify(file, fileContents);
+	};
+
+	// checks that the active file is a canvas
+	activeFileIsCanvas = (file: TFile) => {
+		return file.extension === "canvas";
+	};
+
 
   async onload() {
     console.log('NewNotePlugin loaded');
@@ -78,15 +88,6 @@ export default class NewNotePlugin extends Plugin {
 	else {
 		new Notice("No active canvas file.", 5000);
 	}
-  }
-
-  async activeFileIsCanvas(file: TFile) {
-    return file.extension === 'canvas';
-  }
-
-  async writeCanvasFile(file: TFile, canvasData: CanvasData) => {
-	const fileContents = JSON.stringify(canvasData);
-	await this.app.vault.modify(file, fileContents);
-};
+  };
 
 }
