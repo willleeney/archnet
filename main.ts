@@ -150,6 +150,10 @@ export default class ArchnetPlugin extends Plugin {
 		// aggregates all the text from the parent nodes 
 		let promptHistory = getAllTextFromParentNodes(canvasContents, selectedNode.id)
 		promptHistory += selectedNode.text
+
+
+		
+
 		
 		const xOffset = [-500, 0, 500];
 		for (let i = 0; i < xOffset.length; i++) {
@@ -193,11 +197,11 @@ export default class ArchnetPlugin extends Plugin {
 }
 
 interface ArchnetSettings {
-	mySetting: string;
+	secretKey: string;
 }
 
 const DEFAULT_SETTINGS: ArchnetSettings = {
-	mySetting: 'default'
+	secretKey: 'default'
 }
 
 
@@ -217,14 +221,14 @@ class ArchnetSettingTab extends PluginSettingTab {
 		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
+			.setName('Secret Key')
+			.setDesc('Your openAI secret key')
 			.addText(text => text
 				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
+				.setValue(this.plugin.settings.secretKey)
 				.onChange(async (value) => {
 					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
+					this.plugin.settings.secretKey = value;
 					await this.plugin.saveSettings();
 				}));
 	}
