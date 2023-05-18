@@ -36,17 +36,16 @@ export default class ArchnetPlugin extends Plugin {
 		return data;
 	};
 
-	// creates a new node at 0,0 with text hello world
-	createNode = () => {
+	createNode = (xcord, ycord) => {
 
 		const fileNode: CanvasTextData = {
 			id: makeid(20),
-			x: 0,
-			y: 0,
-			width: 100,
-			height: 100,
+			x: xcord,
+			y: ycord,
+			width: 400,
+			height: 250,
 			type: "text",
-			text: "hello world?"
+			text: "placement text"
 		};
 
 		return fileNode;
@@ -82,7 +81,6 @@ export default class ArchnetPlugin extends Plugin {
 	}
 	
 
-
   async onload() {
     console.log('ArchnetPlugin loaded');
 
@@ -111,31 +109,31 @@ export default class ArchnetPlugin extends Plugin {
 
 		// get the content of the canvas
 		let canvasContents = await this.getCanvasContents(activeFile);
-		new Notice('got content of canvas');
 
 		// get the current selected node
 		const selectedNode = this.getActiveNode()
-		new Notice(selectedNode.id);
 		
-		// create new node and add to canvas
-		const targetNode = this.createNode();
-		new Notice('created node');
-		canvasContents.nodes = canvasContents.nodes.concat(targetNode);
-		new Notice('added node');
+		const xOffset = [-400, 0, 400];
+		for (let i = 0; i < xOffset.length; i++) {
+			// create new node and add to canvas
+			const targetNode = this.createNode(selectedNode.x + xOffset[i], selectedNode.y - 500));
+			new Notice('created node');
+			canvasContents.nodes = canvasContents.nodes.concat(targetNode);
+			new Notice('added node');
 
-		// Create a connection between the selected node and the new node
-		const newConnection = {
-			id: makeid(20),
-			fromNode: selectedNode.id,
-			toNode: targetNode.id,
-			fromSide: 'bottom',
-			toSide: 'top'
-		};
-		canvasContents.edges = canvasContents.edges.concat(newConnection)
+			// Create a connection between the selected node and the new node
+			const newConnection = {
+				id: makeid(20),
+				fromNode: selectedNode.id,
+				toNode: targetNode.id,
+				fromSide: 'bottom',
+				toSide: 'top'
+			};
+			canvasContents.edges = canvasContents.edges.concat(newConnection)
+		}
 
 		// write the updates to the file
 		await this.writeCanvasFile(activeFile, canvasContents);
-		new Notice('wrote contents');
   		}
 	else {
 		new Notice("No active canvas file.", 5000);
