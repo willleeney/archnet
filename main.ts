@@ -6,7 +6,10 @@ import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import * as fs from "fs";
 import * as os from "os";
-import axios from "axios";
+import { createWriteStream } from 'node:fs';
+import { mkdir } from 'node:fs/promises';
+import { get } from 'https';
+import { IncomingMessage } from 'http';
 
 type GPTArguments = {
 	seed?: number; // RNG seed (default: -1)
@@ -153,24 +156,24 @@ Intel Mac/OSX: cd chat;./gpt4all-lora-quantized-OSX-intel
     console.log(`File downloaded successfully to ${this.modelPath}`);
   }
 
-  private async downloadFile(url: string, destination: string): Promise<void> {
-    const { data, headers } = await axios.get(url, { responseType: "stream" });
-    const totalSize = parseInt(headers["content-length"], 10);
-    const dir = new URL(`file://${os.homedir()}/.nomic/`);
-    await fs.mkdir(dir, { recursive: true }, (err) => {
-      if (err) {
-        throw err;
-      }
-    });
+  private downloadFile(url: string, destination: string): Promise<void> {
+	return new Promise(async (resolve, reject) => {
+		const dir = new URL(`file://${os.homedir()}/.nomic/`);
+		await mkdir(dir, { recursive: true });
+		const response = await followRedirects(url);
 
-    const writer = fs.createWriteStream(destination);
-
-    data.pipe(writer);
-
-    return new Promise((resolve, reject) => {
-      writer.on("finish", resolve);
-      writer.on("error", reject);
-    });
+		if (response.statusCode !== 200)
+			return reject(response.statusCode || 'Failed to download');
+		const totalSize = Number(response.headers['content-length']) || 0;
+		if (totalSize === 0)
+			return reject(
+				'Failed to download: No download size provided by server',
+			);
+		const writer = createWriteStream(destination);
+		writer.addListener('finish', resolve);
+		writer.addListener('error', reject);
+		response.pipe(writer);
+	});
   }
 
   public prompt(prompt: string): Promise<string> {
@@ -225,6 +228,19 @@ Intel Mac/OSX: cd chat;./gpt4all-lora-quantized-OSX-intel
     });
   }
 }
+
+const followRedirects = async (
+    url: string | undefined,
+): Promise<IncomingMessage> => {
+    if (url === undefined) throw new Error('No URL provided');
+    const response = await new Promise<IncomingMessage>((res) =>
+        get(url, (msg) => res(msg)),
+    );
+    if (response.statusCode === 301 || response.statusCode === 302)
+        return followRedirects(response.headers.location);
+    return response;
+};
+
 
 // function to create a random identifier
 function makeid(length) {
@@ -294,6 +310,8 @@ function getAllTextFromParentNodes(canvasContents: CanvasData, nodeID: string): 
 
     return promptHistory;
 }
+
+
 
 
 export default class ArchnetPlugin extends Plugin {
