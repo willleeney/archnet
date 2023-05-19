@@ -416,18 +416,15 @@ export default class ArchnetPlugin extends Plugin {
 		let promptHistory = getAllTextFromParentNodes(canvasContents, selectedNode.id)
 		promptHistory += selectedNode.text
 
-		/*
+		
 		const gpt4all = new GPT4All()
 		await gpt4all.init();
 		// Open the connection with the model
 		await gpt4all.open();
 		// Generate a response using a prompt
-		const prompt = 'Tell me about how Open Access to AI is going to help humanity.';
-		const response = await gpt4all.prompt(prompt);
-		console.log(`Prompt: ${prompt}`);
-		console.log(`Response: ${response}`);
+		//const prompt = 'Tell me about how Open Access to AI is going to help humanity.';
 			
-
+		/*
 		const configuration = new Configuration({
 			apiKey: this.settings.secretKey,
 		});
@@ -444,41 +441,25 @@ export default class ArchnetPlugin extends Plugin {
 			presence_penalty: this.settings.presencePenalty,
 			n: this.settings.nCompletions,
 		}).catch((err) => {console.error(err)});
-
-		*/
-
-		const configuration = new Configuration({
-			apiKey: 'none',
-			apiBase: 'http://localhost:4891/v1',
-		});
-
-		const openai = new OpenAIApi(configuration);
-		new Notice("generating completions...")
-
-		let res: NextApiResponse = await openai.createCompletion({
-			model: "gpt4all-j-v1.3-groovy",
-			prompt: promptHistory,
-			max_tokens: this.settings.maxTokens,
-			top_p: 1.0,
-			frequency_penalty: this.settings.frequencyPenalty,
-			presence_penalty: this.settings.presencePenalty,
-			n: this.settings.nCompletions,
-		}).catch((err) => {console.error(err)});
-
 		
 		const choices = res.data.choices;
 		const completions = choices.map(choice => choice.text);
 
+		*/
+
 		const xOffset = generateOffsetArray(this.settings.nCompletions)
 		for (let i = 0; i < xOffset.length; i++) {
+
+			let completion = await gpt4all.prompt(promptHistory);
+
 			// create new node and add to canvas
-			const targetNode = this.createNode(selectedNode.x - xOffset[i], selectedNode.y + 500, completions[i]);
+			let targetNode = this.createNode(selectedNode.x - xOffset[i], selectedNode.y + 500, completion);
 			new Notice('created node');
 			canvasContents.nodes = canvasContents.nodes.concat(targetNode);
 			new Notice('added node');
 
 			// Create a connection between the selected node and the new node
-			const newConnection = {
+			let newConnection = {
 				id: makeid(20),
 				fromNode: selectedNode.id,
 				toNode: targetNode.id,
@@ -487,10 +468,10 @@ export default class ArchnetPlugin extends Plugin {
 				color: "6"
 			};
 			canvasContents.edges = canvasContents.edges.concat(newConnection);
+			// write the updates to the file
+			await this.writeCanvasFile(activeFile, canvasContents);
 		}
 
-		// write the updates to the file
-		await this.writeCanvasFile(activeFile, canvasContents);
   		}
 	else {
 		new Notice("No active canvas file.", 5000);
