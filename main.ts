@@ -427,7 +427,8 @@ export default class ArchnetPlugin extends Plugin {
 		promptHistory += selectedNode.text
 
 
-		const gpt4all = new GPT4All('gpt4all-lora-quantized', true)
+		const gpt4all = new GPT4All()
+		await gpt4all.init();
 		// Open the connection with the model
 		await gpt4all.open();
 		// Generate a response using a prompt
