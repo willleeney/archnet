@@ -30,12 +30,11 @@ function generateOffsetArray(n: number): number[] {
 		  result.push(value);
 		}
 	  } else {
-		const middleIndex = n / 2 - 1;
-		for (let i = 1; i <= n; i++) {
-		  const value = (i <= middleIndex ? i - middleIndex : i - middleIndex - 0.5) * 500;
-		  result.push(value);
+		const middleIndex = n / 2;
+		for (let i = -middleIndex; i <= middleIndex; i++) {
+			result.push(i*500);
 		}
-	  }
+	}	
 	
 	  return result;
 }
