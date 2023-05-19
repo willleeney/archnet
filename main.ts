@@ -26,13 +26,13 @@ function generateOffsetArray(n: number): number[] {
 	  if (n % 2 === 1) {
 		const middleIndex = Math.floor(n / 2);
 		for (let i = 0; i < n; i++) {
-		  const value = (i - middleIndex) * 250;
+		  const value = (i - middleIndex) * 500;
 		  result.push(value);
 		}
 	  } else {
-		const middleIndex = n / 2;
+		const middleIndex = n / 2 - 1;
 		for (let i = 1; i <= n; i++) {
-		  const value = (i <= middleIndex ? i - middleIndex : i - middleIndex - 1) * 250;
+		  const value = (i <= middleIndex ? i - middleIndex : i - middleIndex - 0.5) * 500;
 		  result.push(value);
 		}
 	  }
