@@ -2,14 +2,12 @@ import { App, Plugin, MarkdownView, TFile,  Notice, TFolder, TAbstractFile, Plug
 import { CanvasData, CanvasTextData } from "obsidian/canvas";
 import { Configuration, OpenAIApi } from "openai";
 import {NextApiRequest, NextApiResponse} from 'next';
-import { exec, spawn, ChildProcessByStdio } from 'child_process';
-import type { Writable, Readable } from 'stream';
-import { promisify } from 'util';
-import { existsSync, createWriteStream } from 'fs';
-import { chmod, mkdir } from 'fs/promises';
-import * as os from 'os';
-import { get } from 'https';
-import { IncomingMessage } from 'http';
+import { exec, spawn } from "child_process";
+import { promisify } from "util";
+import * as fs from "fs";
+import * as os from "os";
+import axios from "axios";
+import * as ProgressBar from "progress";
 
 type GPTArguments = {
     seed: number; // RNG seed (default: -1)
@@ -25,221 +23,212 @@ type GPTArguments = {
     model: string; // model path (default: gpt4all-lora-quantized.bin)
 };
 
-/*
-  allowed models:
-    Linux: cd chat;./gpt4all-lora-quantized-linux-x86
-    Windows (PowerShell): cd chat;./gpt4all-lora-quantized-win64.exe
-    M1 Mac/OSX: cd chat;./gpt4all-lora-quantized-OSX-m1
-    Intel Mac/OSX: cd chat;./gpt4all-lora-quantized-OSX-intel
-*/
-const availableModels = [
-    'gpt4all-lora-quantized',
-    // 'gpt4all-lora-unfiltered-quantized',
-] as const;
-const MODEL_URL_BASE = 'https://github.com/nomic-ai/gpt4all/raw/main/gpt4all-training/chat/';
-
-export type AvailableModels = (typeof availableModels)[number];
-
 export class GPT4All {
-    private bot: ChildProcessByStdio<Writable, Readable, null> | null = null;
-    private model: AvailableModels;
-    private decoderConfig: Partial<GPTArguments>;
-    private executablePath: string;
-    private modelPath: string;
-    private downloadPromises: Promise<void>[] | null = null;
+  private bot: ReturnType<typeof spawn> | null = null;
+  private model: string;
+  private decoderConfig: Partial<GPTArguments>;
+  private executablePath: string;
+  private modelPath: string;
 
-    constructor(
-        model: AvailableModels = 'gpt4all-lora-quantized',
-        forceDownload: boolean = false,
-        decoderConfig: Partial<GPTArguments> = {},
+  constructor(
+    model: string = "gpt4all-lora-quantized",
+    forceDownload: boolean = false,
+    decoderConfig: Partial<GPTArguments> = {},
+  ) {
+    this.model = model;
+    this.decoderConfig = decoderConfig;
+    /* 
+    allowed models: 
+    M1 Mac/OSX: cd chat;./gpt4all-lora-quantized-OSX-m1
+Linux: cd chat;./gpt4all-lora-quantized-linux-x86
+Windows (PowerShell): cd chat;./gpt4all-lora-quantized-win64.exe
+Intel Mac/OSX: cd chat;./gpt4all-lora-quantized-OSX-intel
+    */
+    if (
+      "gpt4all-lora-quantized" !== model &&
+      "gpt4all-lora-unfiltered-quantized" !== model
     ) {
-        this.model = model;
-        this.decoderConfig = decoderConfig;
-        if (!availableModels.includes(model as AvailableModels)) {
-            throw new Error(
-                `Model ${model} is not supported. Current models supported are:\n${availableModels.join(
-                    ',\n',
-                )}`,
-            );
+      throw new Error(`Model ${model} is not supported. Current models supported are: 
+                gpt4all-lora-quantized
+                gpt4all-lora-unfiltered-quantized`);
+    }
+
+    this.executablePath = `${os.homedir()}/.nomic/gpt4all`;
+    this.modelPath = `${os.homedir()}/.nomic/${model}.bin`;
+  }
+
+  async init(forceDownload: boolean = false): Promise<void> {
+    const downloadPromises: Promise<void>[] = [];
+
+    if (forceDownload || !fs.existsSync(this.executablePath)) {
+      downloadPromises.push(this.downloadExecutable());
+    }
+
+    if (forceDownload || !fs.existsSync(this.modelPath)) {
+      downloadPromises.push(this.downloadModel());
+    }
+
+    await Promise.all(downloadPromises);
+  }
+
+  public async open(): Promise<void> {
+    if (this.bot !== null) {
+      this.close();
+    }
+
+    let spawnArgs = [this.executablePath, "--model", this.modelPath];
+
+    for (let [key, value] of Object.entries(this.decoderConfig)) {
+      spawnArgs.push(`--${key}`, value.toString());
+    }
+
+    this.bot = spawn(spawnArgs[0], spawnArgs.slice(1), {
+      stdio: ["pipe", "pipe", "ignore"],
+    });
+    // wait for the bot to be ready
+    await new Promise((resolve) => {
+      this.bot?.stdout?.on("data", (data) => {
+        if (data.toString().includes(">")) {
+          resolve(true);
         }
+      });
+    });
+  }
 
-        this.executablePath = `${os.homedir()}/.nomic/gpt4all`;
-        this.modelPath = `${os.homedir()}/.nomic/${model}.bin`;
-        if (forceDownload) this.init(forceDownload);
+  public close(): void {
+    if (this.bot !== null) {
+      this.bot.kill();
+      this.bot = null;
     }
+  }
 
-    async init(forceDownload: boolean = false): Promise<void | void[]> {
-        if (this.downloadPromises) return Promise.all(this.downloadPromises);
-        const downloadPromises: Promise<void>[] = [];
-
-        if (forceDownload || !existsSync(this.executablePath)) {
-            downloadPromises.push(this.downloadExecutable());
-        }
-
-        if (forceDownload || !existsSync(this.modelPath)) {
-            downloadPromises.push(this.downloadModel());
-        }
-
-        return Promise.all(downloadPromises);
-    }
-
-    public async open(): Promise<void> {
-        this.close();
-
-        let spawnArgs = [this.executablePath, '--model', this.modelPath];
-
-        for (let [key, value] of Object.entries(this.decoderConfig)) {
-            spawnArgs.push(`--${key}`, value.toString());
-        }
-
-        const bot = spawn(spawnArgs[0], spawnArgs.slice(1), {
-            stdio: ['pipe', 'pipe', 'ignore'],
-        });
-        this.bot = bot;
-
-        // wait for the bot to be ready
-        await new Promise((resolve) => {
-            const startupListener = (data: Buffer) => {
-                if (!data.toString().includes('>')) return;
-                resolve(true);
-                bot.stdout.removeListener('data', startupListener);
-            };
-            bot.stdout.addListener('data', startupListener);
-        });
-    }
-
-    public close(): void {
-        if (this.bot === null) return;
-        this.bot.kill();
-        this.bot = null;
-    }
-
-    private async downloadExecutable(): Promise<void> {
-        const upstream = await getModelUrl(this.model);
-
-        await this.downloadFile(upstream, this.executablePath);
-
-        await chmod(this.executablePath, 0o755);
-
-        console.log(`File downloaded successfully to ${this.executablePath}`);
-    }
-
-    private async downloadModel(): Promise<void> {
-        const modelUrl = `https://the-eye.eu/public/AI/models/nomic-ai/gpt4all/${this.model}.bin`;
-
-        await this.downloadFile(modelUrl, this.modelPath);
-
-        console.log(`File downloaded successfully to ${this.modelPath}`);
-    }
-
-    private downloadFile(url: string, destination: string): Promise<void> {
-        return new Promise(async (resolve, reject) => {
-            const dir = new URL(`file://${os.homedir()}/.nomic/`);
-            await mkdir(dir, { recursive: true });
-            const response = await followRedirects(url);
-
-            if (response.statusCode !== 200)
-                return reject(response.statusCode || 'Failed to download');
-            const totalSize = Number(response.headers['content-length']) || 0;
-            if (totalSize === 0)
-                return reject(
-                    'Failed to download: No download size provided by server',
-                );
-            const writer = createWriteStream(destination);
-            writer.addListener('finish', resolve);
-            writer.addListener('error', reject);
-            response.pipe(writer);
-        });
-    }
-
-    public prompt(prompt: string): Promise<string> {
-        const bot = this.bot;
-        if (bot === null) {
-            throw new Error('Bot is not initialized.');
-        }
-
-        bot.stdin.write(prompt + '\n');
-
-        return new Promise((resolve, reject) => {
-            let response: string = '';
-            let timeoutId: NodeJS.Timeout;
-
-            const onStdoutData = (data: Buffer) => {
-                const text = data.toString();
-                if (timeoutId) {
-                    clearTimeout(timeoutId);
-                }
-
-                if (/^\u{001B}.*\n>\s?/mu.test(text)) {
-                    // console.log('Response starts with >, end of message - Resolving...');
-                    // Debug log: Indicate that the response ends with "\\f"
-                    terminateAndResolve(response); // Remove the trailing "\f" delimiter
-                } else {
-                    timeoutId = setTimeout(() => {
-                        // console.log('Timeout reached - Resolving...');
-                        // Debug log: Indicate that the timeout has been reached
-                        terminateAndResolve(response);
-                    }, 4000); // Set a timeout of 4000ms to wait for more data
-                }
-                // console.log('Received text:', text);
-                // Debug log: Show the received text
-                response += text;
-                // console.log('Updated response:', response);
-                // Debug log: Show the updated response
-            };
-
-            const onStdoutError = (err: Error) => {
-                bot.stdout.removeListener('data', onStdoutData);
-                bot.stdout.removeListener('error', onStdoutError);
-                reject(err);
-            };
-
-            const terminateAndResolve = (finalResponse: string) => {
-                bot.stdout.removeListener('data', onStdoutData);
-                bot.stdout.removeListener('error', onStdoutError);
-                // check for > at the end and remove it
-                if (finalResponse.endsWith('>')) {
-                    finalResponse = finalResponse.slice(0, -1);
-                }
-                resolve(finalResponse);
-            };
-
-            bot.stdout.addListener('data', onStdoutData);
-            bot.stdout.addListener('error', onStdoutError);
-        });
-    }
-}
-
-const getModelUrl = async (_model: AvailableModels): Promise<string> => {
+  private async downloadExecutable(): Promise<void> {
+    let upstream: string;
     const platform = os.platform();
-    if (platform === 'linux')
-        return MODEL_URL_BASE + 'gpt4all-lora-quantized-linux-x86';
-    if (platform === 'win32')
-        return MODEL_URL_BASE + 'gpt4all-lora-quantized-win64.exe';
-    if (platform !== 'darwin')
-        throw new Error(
-            `Your platform is not supported: ${platform}. Current binaries supported are for OSX (ARM and Intel), Linux and Windows.`,
-        );
-    // check for M1 Mac
-    const { stdout } = await promisify(exec)('uname -m');
-    if (stdout.trim() === 'arm64')
-        return MODEL_URL_BASE + 'gpt4all-lora-quantized-OSX-m1';
-    return MODEL_URL_BASE + 'gpt4all-lora-quantized-OSX-intel';
-};
 
-const followRedirects = async (
-    url: string | undefined,
-): Promise<IncomingMessage> => {
-    if (url === undefined) throw new Error('No URL provided');
-    const response = await new Promise<IncomingMessage>((res) =>
-        get(url, (msg) => res(msg)),
-    );
-    if (response.statusCode === 301 || response.statusCode === 302)
-        return followRedirects(response.headers.location);
-    return response;
-};
+    if (platform === "darwin") {
+      // check for M1 Mac
+      const { stdout } = await promisify(exec)("uname -m");
+      if (stdout.trim() === "arm64") {
+        upstream =
+          "https://github.com/nomic-ai/gpt4all/raw/main/gpt4all-training/chat/gpt4all-lora-quantized-OSX-m1";
+      } else {
+        upstream =
+          "https://github.com/nomic-ai/gpt4all/raw/main/gpt4all-training/chat/gpt4all-lora-quantized-OSX-intel";
+      }
+    } else if (platform === "linux") {
+      upstream =
+        "https://github.com/nomic-ai/gpt4all/raw/main/gpt4all-training/chat/gpt4all-lora-quantized-linux-x86";
+    } else if (platform === "win32") {
+      upstream =
+        "https://github.com/nomic-ai/gpt4all/raw/main/gpt4all-training/chat/gpt4all-lora-quantized-win64.exe";
+    } else {
+      throw new Error(
+        `Your platform is not supported: ${platform}. Current binaries supported are for OSX (ARM and Intel), Linux and Windows.`
+      );
+    }
 
+    await this.downloadFile(upstream, this.executablePath);
 
+    await fs.chmod(this.executablePath, 0o755, (err) => {
+      if (err) {
+        throw err;
+      }
+    });
+
+    console.log(`File downloaded successfully to ${this.executablePath}`);
+  }
+
+  private async downloadModel(): Promise<void> {
+    const modelUrl = `https://the-eye.eu/public/AI/models/nomic-ai/gpt4all/${this.model}.bin`;
+
+    await this.downloadFile(modelUrl, this.modelPath);
+
+    console.log(`File downloaded successfully to ${this.modelPath}`);
+  }
+
+  private async downloadFile(url: string, destination: string): Promise<void> {
+    const { data, headers } = await axios.get(url, { responseType: "stream" });
+    const totalSize = parseInt(headers["content-length"], 10);
+    const progressBar = new ProgressBar("[:bar] :percent :etas", {
+      complete: "=",
+      incomplete: " ",
+      width: 20,
+      total: totalSize,
+    });
+    const dir = new URL(`file://${os.homedir()}/.nomic/`);
+    await fs.mkdir(dir, { recursive: true }, (err) => {
+      if (err) {
+        throw err;
+      }
+    });
+
+    const writer = fs.createWriteStream(destination);
+
+    data.on("data", (chunk: any) => {
+      progressBar.tick(chunk.length);
+    });
+
+    data.pipe(writer);
+
+    return new Promise((resolve, reject) => {
+      writer.on("finish", resolve);
+      writer.on("error", reject);
+    });
+  }
+
+  public prompt(prompt: string): Promise<string> {
+    if (this.bot === null) {
+      throw new Error("Bot is not initialized.");
+    }
+
+    this.bot.stdin.write(prompt + "\n");
+
+    return new Promise((resolve, reject) => {
+      let response: string = "";
+      let timeoutId: NodeJS.Timeout;
+
+      const onStdoutData = (data: Buffer) => {
+        const text = data.toString();
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+
+        if (text.includes(">")) {
+          // console.log('Response starts with >, end of message - Resolving...'); // Debug log: Indicate that the response ends with "\\f"
+          terminateAndResolve(response); // Remove the trailing "\f" delimiter
+        } else {
+          timeoutId = setTimeout(() => {
+            // console.log('Timeout reached - Resolving...'); // Debug log: Indicate that the timeout has been reached
+            terminateAndResolve(response);
+          }, 4000); // Set a timeout of 4000ms to wait for more data
+        }
+        // console.log('Received text:', text); // Debug log: Show the received text
+        response += text;
+        // console.log('Updated response:', response); // Debug log: Show the updated response
+      };
+
+      const onStdoutError = (err: Error) => {
+        this.bot.stdout.removeListener("data", onStdoutData);
+        this.bot.stdout.removeListener("error", onStdoutError);
+        reject(err);
+      };
+
+      const terminateAndResolve = (finalResponse: string) => {
+        this.bot.stdout.removeListener("data", onStdoutData);
+        this.bot.stdout.removeListener("error", onStdoutError);
+        // check for > at the end and remove it
+        if (finalResponse.endsWith(">")) {
+          finalResponse = finalResponse.slice(0, -1);
+        }
+        resolve(finalResponse);
+      };
+
+      this.bot.stdout.on("data", onStdoutData);
+      this.bot.stdout.on("error", onStdoutError);
+    });
+  }
+}
 
 // function to create a random identifier
 function makeid(length) {
