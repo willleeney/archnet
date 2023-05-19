@@ -114,23 +114,24 @@ Intel Mac/OSX: cd chat;./gpt4all-lora-quantized-OSX-intel
   private async downloadExecutable(): Promise<void> {
     let upstream: string;
     const platform = os.platform();
+	console.log('downloading started for exe')
 
     if (platform === "darwin") {
       // check for M1 Mac
       const { stdout } = await promisify(exec)("uname -m");
       if (stdout.trim() === "arm64") {
         upstream =
-          "https://github.com/nomic-ai/gpt4all/raw/main/gpt4all-training/chat/gpt4all-lora-quantized-OSX-m1";
+          "https://github.com/nomic-ai/gpt4all/raw/main/gpt4all-training/chat/gpt4all-lora-quantized-OSX-m1?raw=true";
       } else {
         upstream =
-          "https://github.com/nomic-ai/gpt4all/raw/main/gpt4all-training/chat/gpt4all-lora-quantized-OSX-intel";
+          "https://github.com/nomic-ai/gpt4all/raw/main/gpt4all-training/chat/gpt4all-lora-quantized-OSX-intel?raw=true";
       }
     } else if (platform === "linux") {
       upstream =
-        "https://github.com/nomic-ai/gpt4all/raw/main/gpt4all-training/chat/gpt4all-lora-quantized-linux-x86";
+        "https://github.com/nomic-ai/gpt4all/raw/main/gpt4all-training/chat/gpt4all-lora-quantized-linux-x86?raw=true";
     } else if (platform === "win32") {
       upstream =
-        "https://github.com/nomic-ai/gpt4all/raw/main/gpt4all-training/chat/gpt4all-lora-quantized-win64.exe";
+        "https://github.com/nomic-ai/gpt4all/raw/main/gpt4all-training/chat/gpt4all-lora-quantized-win64.exe?raw=true";
     } else {
       throw new Error(
         `Your platform is not supported: ${platform}. Current binaries supported are for OSX (ARM and Intel), Linux and Windows.`
@@ -149,6 +150,8 @@ Intel Mac/OSX: cd chat;./gpt4all-lora-quantized-OSX-intel
   }
 
   private async downloadModel(): Promise<void> {
+	console.log('downloading started for model')
+
     const modelUrl = `https://the-eye.eu/public/AI/models/nomic-ai/gpt4all/${this.model}.bin`;
 
     await this.downloadFile(modelUrl, this.modelPath);
