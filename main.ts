@@ -199,11 +199,6 @@ export default class ArchnetPlugin extends Plugin {
 		const choices = res.data.choices;
 		const completions = choices.map(choice => choice.text);
 
-		console.log(generateOffsetArray(1)); // Output: [0]
-		console.log(generateOffsetArray(2)); // Output: [-250, 250]
-		console.log(generateOffsetArray(3)); // Output: [-500, 0, 500]
-		console.log(generateOffsetArray(4)); // Output: [-750, -250, 250, 750]
-
 		const xOffset = generateOffsetArray(this.settings.nCompletions)
 		for (let i = 0; i < xOffset.length; i++) {
 			// create new node and add to canvas
