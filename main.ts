@@ -7,7 +7,6 @@ import { promisify } from "util";
 import * as fs from "fs";
 import * as os from "os";
 import axios from "axios";
-import * as ProgressBar from "progress";
 
 type GPTArguments = {
     seed: number; // RNG seed (default: -1)
@@ -150,12 +149,6 @@ Intel Mac/OSX: cd chat;./gpt4all-lora-quantized-OSX-intel
   private async downloadFile(url: string, destination: string): Promise<void> {
     const { data, headers } = await axios.get(url, { responseType: "stream" });
     const totalSize = parseInt(headers["content-length"], 10);
-    const progressBar = new ProgressBar("[:bar] :percent :etas", {
-      complete: "=",
-      incomplete: " ",
-      width: 20,
-      total: totalSize,
-    });
     const dir = new URL(`file://${os.homedir()}/.nomic/`);
     await fs.mkdir(dir, { recursive: true }, (err) => {
       if (err) {
@@ -164,10 +157,6 @@ Intel Mac/OSX: cd chat;./gpt4all-lora-quantized-OSX-intel
     });
 
     const writer = fs.createWriteStream(destination);
-
-    data.on("data", (chunk: any) => {
-      progressBar.tick(chunk.length);
-    });
 
     data.pipe(writer);
 
@@ -182,7 +171,7 @@ Intel Mac/OSX: cd chat;./gpt4all-lora-quantized-OSX-intel
       throw new Error("Bot is not initialized.");
     }
 
-    this.bot.stdin.write(prompt + "\n");
+    this.bot.stdin.write(prompt);
 
     return new Promise((resolve, reject) => {
       let response: string = "";
