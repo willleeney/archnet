@@ -145,7 +145,7 @@ Intel Mac/OSX: cd chat;./gpt4all-lora-quantized-OSX-intel
       }
     });
 
-    console.log(`File downloaded successfully to ${this.executablePath}`);
+    console.log(`Executable downloaded successfully to ${this.executablePath}`);
   }
 
   private async downloadModel(): Promise<void> {
@@ -153,7 +153,7 @@ Intel Mac/OSX: cd chat;./gpt4all-lora-quantized-OSX-intel
 
     await this.downloadFile(modelUrl, this.modelPath);
 
-    console.log(`File downloaded successfully to ${this.modelPath}`);
+    console.log(`Model downloaded successfully to ${this.modelPath}`);
   }
 
   private downloadFile(url: string, destination: string): Promise<void> {
