@@ -416,7 +416,7 @@ export default class ArchnetPlugin extends Plugin {
 		let promptHistory = getAllTextFromParentNodes(canvasContents, selectedNode.id)
 		promptHistory += selectedNode.text
 
-		
+		/*
 		const gpt4all = new GPT4All()
 		await gpt4all.init();
 		// Open the connection with the model
@@ -424,7 +424,7 @@ export default class ArchnetPlugin extends Plugin {
 		// Generate a response using a prompt
 		//const prompt = 'Tell me about how Open Access to AI is going to help humanity.';
 			
-		/*
+		
 		const configuration = new Configuration({
 			apiKey: this.settings.secretKey,
 		});
@@ -447,10 +447,33 @@ export default class ArchnetPlugin extends Plugin {
 
 		*/
 
+		const configuration = new Configuration({
+            //apiKey: this.settings.secretKey,
+            apiKey: "not needed",
+            apiBase: "http://localhost:4891/"
+        });
+
+        const openai = new OpenAIApi(configuration);
+        new Notice("generating completions...")
+
+
+        let res: NextApiResponse = await openai.createCompletion({
+            model: "gpt4all-j-v1.3-groovy",
+            prompt: promptHistory,
+            max_tokens: this.settings.maxTokens,
+            top_p: 1.0,
+            frequency_penalty: this.settings.frequencyPenalty,
+            presence_penalty: this.settings.presencePenalty,
+            n: this.settings.nCompletions,
+        }).catch((err) => {console.error(err)});
+
+		const choices = res.data.choices;
+		const completions = choices.map(choice => choice.text);
+
 		const xOffset = generateOffsetArray(this.settings.nCompletions)
 		for (let i = 0; i < xOffset.length; i++) {
 
-			let completion = await gpt4all.prompt(promptHistory);
+			// let completion = await gpt4all.prompt(promptHistory);
 
 			// create new node and add to canvas
 			let targetNode = this.createNode(selectedNode.x - xOffset[i], selectedNode.y + 500, completion);
