@@ -10,7 +10,6 @@ import { chmod, mkdir } from 'fs/promises';
 import * as os from 'os';
 import { get } from 'https';
 import { IncomingMessage } from 'http';
-import ProgressBar from 'progress';
 
 type GPTArguments = {
     seed: number; // RNG seed (default: -1)
@@ -37,7 +36,7 @@ const availableModels = [
     'gpt4all-lora-quantized',
     // 'gpt4all-lora-unfiltered-quantized',
 ] as const;
-const MODEL_URL_BASE = 'https://github.com/nomic-ai/gpt4all/blob/main/chat/';
+const MODEL_URL_BASE = 'https://github.com/nomic-ai/gpt4all/raw/main/gpt4all-training/chat/';
 
 export type AvailableModels = (typeof availableModels)[number];
 
@@ -147,18 +146,9 @@ export class GPT4All {
                     'Failed to download: No download size provided by server',
                 );
             const writer = createWriteStream(destination);
-            const progressBar = new ProgressBar('[:bar] :percent :etas', {
-                complete: '=',
-                incomplete: ' ',
-                width: 20,
-                total: totalSize,
-            });
             writer.addListener('finish', resolve);
             writer.addListener('error', reject);
             response.pipe(writer);
-            response.addListener('data', (chunk) =>
-                progressBar.tick(chunk.length),
-            );
         });
     }
 
@@ -223,9 +213,9 @@ export class GPT4All {
 const getModelUrl = async (_model: AvailableModels): Promise<string> => {
     const platform = os.platform();
     if (platform === 'linux')
-        return MODEL_URL_BASE + 'gpt4all-lora-quantized-linux-x86?raw=true';
+        return MODEL_URL_BASE + 'gpt4all-lora-quantized-linux-x86';
     if (platform === 'win32')
-        return MODEL_URL_BASE + 'gpt4all-lora-quantized-win64.exe?raw=true';
+        return MODEL_URL_BASE + 'gpt4all-lora-quantized-win64.exe';
     if (platform !== 'darwin')
         throw new Error(
             `Your platform is not supported: ${platform}. Current binaries supported are for OSX (ARM and Intel), Linux and Windows.`,
@@ -233,8 +223,8 @@ const getModelUrl = async (_model: AvailableModels): Promise<string> => {
     // check for M1 Mac
     const { stdout } = await promisify(exec)('uname -m');
     if (stdout.trim() === 'arm64')
-        return MODEL_URL_BASE + 'gpt4all-lora-quantized-OSX-m1?raw=true';
-    return MODEL_URL_BASE + 'gpt4all-lora-quantized-OSX-intel?raw=true';
+        return MODEL_URL_BASE + 'gpt4all-lora-quantized-OSX-m1';
+    return MODEL_URL_BASE + 'gpt4all-lora-quantized-OSX-intel';
 };
 
 const followRedirects = async (
