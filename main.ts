@@ -185,6 +185,8 @@ export default class ArchnetPlugin extends Plugin {
 		const configuration = new Configuration({
 			//apiKey: this.settings.secretKey,
 			apiKey: "not needed",
+			apiBase: "http://localhost:4891/",
+			version: "v1"
 		});
 
 		const openai = new OpenAIApi(configuration);
