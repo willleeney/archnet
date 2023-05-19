@@ -10,6 +10,7 @@ import { createWriteStream } from 'fs';
 import { mkdir } from 'fs/promises';
 import { get } from 'https';
 import { IncomingMessage } from 'http';
+import ProgressBar from 'progress';
 
 type GPTArguments = {
 	seed?: number; // RNG seed (default: -1)
@@ -173,9 +174,18 @@ Intel Mac/OSX: cd chat;./gpt4all-lora-quantized-OSX-intel
 				'Failed to download: No download size provided by server',
 			);
 		const writer = createWriteStream(destination);
+		const progressBar = new ProgressBar('[:bar] :percent :etas', {
+			complete: '=',
+			incomplete: ' ',
+			width: 20,
+			total: totalSize,
+		});
 		writer.addListener('finish', resolve);
 		writer.addListener('error', reject);
 		response.pipe(writer);
+		response.addListener('data', (chunk) =>
+                progressBar.tick(chunk.length),
+            );
 	});
   }
 
