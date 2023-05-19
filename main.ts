@@ -17,20 +17,30 @@ function makeid(length) {
 }
 
 function generateOffsetArray(n: number): number[] {
-	const result: number[] = [];
-  
 	if (n === 1) {
-		result.push(0);
-	} else {
+		return [0];
+	  }
+	
+	  const result: number[] = [];
+	
+	  if (n % 2 === 1) {
 		const middleIndex = Math.floor(n / 2);
 		for (let i = 0; i < n; i++) {
-		const value = (i - middleIndex) * 250;
-		result.push(value);
+		  const value = (i - middleIndex) * 250;
+		  result.push(value);
 		}
-	}
-  
-  return result;
+	  } else {
+		const middleIndex = n / 2;
+		for (let i = 1; i <= n; i++) {
+		  const value = (i <= middleIndex ? i - middleIndex : i - middleIndex - 1) * 250;
+		  result.push(value);
+		}
+	  }
+	
+	  return result;
 }
+
+
 function getAllTextFromParentNodes(canvasContents: CanvasData, nodeID: string): string {
 	const nodeTexts = [''];
 	let currentParentSearching = true; 
