@@ -6,8 +6,8 @@ import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import * as fs from "fs";
 import * as os from "os";
-import { createWriteStream } from 'node:fs';
-import { mkdir } from 'node:fs/promises';
+import { createWriteStream } from 'fs';
+import { mkdir } from 'fs/promises';
 import { get } from 'https';
 import { IncomingMessage } from 'http';
 
