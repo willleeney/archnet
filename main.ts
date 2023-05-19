@@ -32,8 +32,9 @@ function generateOffsetArray(n: number): number[] {
 	  } else {
 		const middleIndex = n / 2;
 		for (let i = -middleIndex; i <= middleIndex; i++) {
-			if (i !== 0)
-			result.push(i*500);
+			if (i !== 0) {
+				result.push(i*500);
+			}
 		}
 	}	
 	
