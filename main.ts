@@ -16,6 +16,21 @@ function makeid(length) {
     return result;
 }
 
+function generateOffsetArray(n: number): number[] {
+	const result: number[] = [];
+	
+	if (n === 1) {
+	  result.push(0);
+	} else {
+	  for (let i = 0; i < n; i++) {
+		const value = (i - Math.floor(n / 2)) * 250;
+		result.push(value);
+	  }
+	}
+	
+	return result;
+  }
+
 function getAllTextFromParentNodes(canvasContents: CanvasData, nodeID: string): string {
 	const nodeTexts = [''];
 	let currentParentSearching = true; 
@@ -134,7 +149,6 @@ export default class ArchnetPlugin extends Plugin {
       ],
     });
 
-
   }
 
   async createNewCard() {
@@ -160,7 +174,7 @@ export default class ArchnetPlugin extends Plugin {
 		});
 
 		const openai = new OpenAIApi(configuration);
-		new Notice("generating completions")
+		new Notice("generating completions...")
 
 		let res: NextApiResponse = await openai.createCompletion({
 			model: "text-davinci-002",
@@ -174,8 +188,8 @@ export default class ArchnetPlugin extends Plugin {
 		
 		const choices = res.data.choices;
 		const completions = choices.map(choice => choice.text);
-		
-		const xOffset = [-500, 0, 500];
+
+		const xOffset = generateOffsetArray(this.settings.nCompletions)
 		for (let i = 0; i < xOffset.length; i++) {
 			// create new node and add to canvas
 			const targetNode = this.createNode(selectedNode.x - xOffset[i], selectedNode.y + 500, completions[i]);
@@ -189,7 +203,8 @@ export default class ArchnetPlugin extends Plugin {
 				fromNode: selectedNode.id,
 				toNode: targetNode.id,
 				fromSide: 'bottom',
-				toSide: 'top'
+				toSide: 'top',
+				color: "6"
 			};
 			canvasContents.edges = canvasContents.edges.concat(newConnection);
 		}
@@ -203,7 +218,7 @@ export default class ArchnetPlugin extends Plugin {
   };
 
   onunload() {
-
+	
   }
 
   async loadSettings() {
