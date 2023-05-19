@@ -164,30 +164,6 @@ export default class ArchnetPlugin extends Plugin {
 
   }
 
-   async gpt4allcall() {
-		// Instantiate GPT4All with default or custom settings
-		const gpt4all = new GPT4All('gpt4all-lora-unfiltered-quantized', true); // Default is 'gpt4all-lora-quantized' model
-	
-		// Initialize and download missing files
-		await gpt4all.init();
-
-		// Open the connection with the model
-		await gpt4all.open();
-		// Generate a response using a prompt
-		const prompt = 'Tell me about how Open Access to AI is going to help humanity.';
-		const response = await gpt4all.prompt(prompt);
-		console.log(`Prompt: ${prompt}`);
-		console.log(`Response: ${response}`);
-	
-		const prompt2 = 'Explain to a five year old why AI is nothing to be afraid of.';
-		const response2 = await gpt4all.prompt(prompt2);
-		console.log(`Prompt: ${prompt2}`);
-		console.log(`Response: ${response2}`);
-	
-		// Close the connection when you're done
-		gpt4all.close();
-	}
-  
 
   async createNewCard() {
 
@@ -207,20 +183,16 @@ export default class ArchnetPlugin extends Plugin {
 
 
 		const configuration = new Configuration({
-			apiKey: this.settings.secretKey,
+			//apiKey: this.settings.secretKey,
+			apiKey: "not needed",
 		});
 
 		const openai = new OpenAIApi(configuration);
 		new Notice("generating completions...")
 
-		// Instantiate GPT4All with default or custom settings
-		const gpres = this.gpt4allcall();
-		console.log(gpres)
-
-
 
 		let res: NextApiResponse = await openai.createCompletion({
-			model: "text-davinci-002",
+			model: "gpt4all-j-v1.3-groovy",
 			prompt: promptHistory,
 			max_tokens: this.settings.maxTokens,
 			top_p: 1.0,
