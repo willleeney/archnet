@@ -2,14 +2,14 @@ import { App, Plugin, MarkdownView, TFile,  Notice, TFolder, TAbstractFile, Plug
 import { CanvasData, CanvasTextData } from "obsidian/canvas";
 import { Configuration, OpenAIApi } from "openai";
 import {NextApiRequest, NextApiResponse} from 'next';
-import { exec, spawn, ChildProcessByStdio } from 'node:child_process';
-import type { Writable, Readable } from 'node:stream';
-import { promisify } from 'node:util';
-import { existsSync, createWriteStream } from 'node:fs';
-import { chmod, mkdir } from 'node:fs/promises';
-import * as os from 'node:os';
-import { get } from 'node:https';
-import { IncomingMessage } from 'node:http';
+import { exec, spawn, ChildProcessByStdio } from 'child_process';
+import type { Writable, Readable } from 'stream';
+import { promisify } from 'util';
+import { existsSync, createWriteStream } from 'fs';
+import { chmod, mkdir } from 'fs/promises';
+import * as os from 'os';
+import { get } from 'https';
+import { IncomingMessage } from 'http';
 import ProgressBar from 'progress';
 
 type GPTArguments = {
