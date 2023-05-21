@@ -1,11 +1,11 @@
 {
-	"id": "archnet",
+	"id": "obsidian-archnet",
 	"name": "Archnet",
 	"version": "1.0.3",
 	"minAppVersion": "0.15.0",
-	"description": "This is no longer the sample plug in ",
+	"description": "Creates possibile branches for LLM text generation in the Canvas",
 	"author": "Will Leeney",
 	"authorUrl": "https://www.github.com/willleeney",
-	"fundingUrl": "",
-	"isDesktopOnly": false
+	"fundingUrl": "https://paypal.me/willleeney?country.x=GB&locale.x=en_GB",
+	"isDesktopOnly": true
 }
