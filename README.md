@@ -8,4 +8,6 @@ You will need to set your secret key in the settings before this can be used - h
 
 This is a work-in-progress, suggestions welcome. 
 
+Based on the worldspider vscode extension. 
+
 <img width="910" alt="Screenshot 2023-05-21 at 22 18 09" src="https://github.com/willleeney/archnet/assets/46964902/2237062f-75e5-4c28-b8ab-1ff807edfb8c">
